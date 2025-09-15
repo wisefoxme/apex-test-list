@@ -3,7 +3,7 @@
   "description": "A plugin that generates a list of apex test and test suite names for use in CI/CD pipelines.",
   "version": "1.13.6",
   "dependencies": {
-    "@oclif/core": "4.5.2",
+    "@oclif/core": "4.5.3",
     "@salesforce/core": "^8.8.0",
     "@salesforce/sf-plugins-core": "^11.3.12",
     "@salesforce/source-deploy-retrieve": "^12.16.5",
