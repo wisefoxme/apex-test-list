@@ -5,6 +5,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.7](https://github.com/wisefoxme/apex-test-list/compare/v1.13.6...v1.13.7) (2025-09-20)
+
+
+### Bug Fixes
+
+* **deps:** bump @oclif/core from 4.5.2 to 4.5.3 ([#294](https://github.com/wisefoxme/apex-test-list/issues/294)) ([909a4a2](https://github.com/wisefoxme/apex-test-list/commit/909a4a23ce76e50637c1086be1ec183166508338))
+* **deps:** bump @oclif/core from 4.5.3 to 4.5.4 ([#299](https://github.com/wisefoxme/apex-test-list/issues/299)) ([d432d47](https://github.com/wisefoxme/apex-test-list/commit/d432d47f7cdb81afe3f1f7df96d88de740601598))
+
 ## [1.13.6](https://github.com/renatoliveira/apex-test-list/compare/v1.13.5...v1.13.6) (2025-09-13)
 
 
