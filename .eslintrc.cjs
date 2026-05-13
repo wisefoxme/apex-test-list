@@ -1,5 +1,6 @@
+// The sf-plugin dependency chain fails to load on Node 25+ in CI (upstream transitive issue).
 const LAST_SUPPORTED_NODE_VERSION_FOR_SF_PLUGIN = 24;
-const nodeVersion = process.versions?.node ?? '';
+const nodeVersion = process.versions?.node ?? '0.0.0';
 const nodeMajorMatch = /^(\d+)/.exec(nodeVersion);
 const nodeMajorVersion = nodeMajorMatch ? Number.parseInt(nodeMajorMatch[1], 10) : NaN;
 const shouldUseSfPlugin =
