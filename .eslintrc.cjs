@@ -1,9 +1,9 @@
-const SF_PLUGIN_MAX_NODE_MAJOR = 24;
+const MAX_NODE_VERSION_FOR_SF_PLUGIN = 24;
 const nodeVersion = process.versions?.node ?? '';
 const nodeMajorMatch = /^(\d+)/.exec(nodeVersion);
-const nodeMajorVersion = nodeMajorMatch ? Number.parseInt(nodeMajorMatch[1], 10) : Number.NaN;
+const nodeMajorVersion = nodeMajorMatch ? Number.parseInt(nodeMajorMatch[1], 10) : NaN;
 const shouldUseSfPlugin =
-  Number.isFinite(nodeMajorVersion) && nodeMajorVersion <= SF_PLUGIN_MAX_NODE_MAJOR;
+  Number.isFinite(nodeMajorVersion) && nodeMajorVersion <= MAX_NODE_VERSION_FOR_SF_PLUGIN;
 
 module.exports = {
   extends: shouldUseSfPlugin
