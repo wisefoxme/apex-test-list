@@ -4,6 +4,9 @@ on:
     branches-ignore: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   unit-tests:
     strategy:
