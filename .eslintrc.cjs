@@ -1,5 +1,5 @@
 const nodeMajorVersion = Number.parseInt(process.versions.node.split('.')[0], 10);
-const shouldUseSfPlugin = Number.isNaN(nodeMajorVersion) || nodeMajorVersion < 25;
+const shouldUseSfPlugin = Number.isFinite(nodeMajorVersion) && nodeMajorVersion < 25;
 
 module.exports = {
   extends: shouldUseSfPlugin
