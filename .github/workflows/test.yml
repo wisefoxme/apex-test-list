@@ -6,10 +6,35 @@ on:
 
 jobs:
   unit-tests:
-    uses: salesforcecli/github-workflows/.github/workflows/unitTest.yml@main
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Configure git longpaths if on Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: git config --system core.longpaths true
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - run: yarn build
+
+      - run: yarn test
+        env:
+          SF_DISABLE_TELEMETRY: true
+
   nuts:
     needs: unit-tests
-    uses: salesforcecli/github-workflows/.github/workflows/nut.yml@main
+    uses: salesforcecli/github-workflows/.github/workflows/nut.yml@3a3a1cac4bf357b29d989b1f779ea2ec13dd4bec
     secrets: inherit
     strategy:
       matrix:
@@ -17,3 +42,4 @@ jobs:
       fail-fast: false
     with:
       os: ${{ matrix.os }}
+      nodeVersion: 20
