@@ -8,13 +8,16 @@
         "kind": "build",
         "isDefault": true
       },
-      "command": "yarn",
+      "command": "npm",
       "type": "shell",
       "presentation": {
         "focus": false,
         "panel": "dedicated"
       },
-      "args": ["run", "pretest"],
+      "args": [
+        "run",
+        "pretest"
+      ],
       "isBackground": false
     }
   ]

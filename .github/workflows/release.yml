@@ -46,14 +46,14 @@ jobs:
         uses: actions/setup-node@v4.0.1
         with:
           node-version: 22
-          cache: yarn
+          cache: npm
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install Dependencies
-        run: yarn install
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Publish to NPM
         run: npm publish --access public --tag latest

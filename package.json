@@ -16,19 +16,21 @@
     "@commitlint/config-conventional": "^19.6.0",
     "@oclif/plugin-command-snapshot": "^5.2.23",
     "@salesforce/cli-plugins-testkit": "^5.3.39",
-    "@salesforce/dev-scripts": "^10.2.10",
+    "@salesforce/dev-config": "^4.3.3",
+    "@salesforce/prettier-config": "^0.0.4",
     "@types/async": "^3.2.24",
-    "@types/mocha": "^10",
     "@types/node": "^22.18.12",
     "@types/xml2js": "^0.4.14",
+    "@vitest/coverage-v8": "^4.1.8",
+    "eslint-config-salesforce-typescript": "^4.0.1",
     "husky": "^9.1.6",
-    "mocha": "^10.8.2",
-    "nyc": "^17.1.0",
     "oclif": "^4.22.32",
     "prettier": "^3.4.2",
     "pretty-quick": "^4.0.0",
+    "shx": "^0.4.0",
     "ts-node": "^10.9.2",
     "typescript": "5.6.3",
+    "vitest": "^4.1.8",
     "wireit": "^0.14.9"
   },
   "engines": {
@@ -67,17 +69,16 @@
   },
   "scripts": {
     "build": "wireit",
-    "clean": "sf-clean",
-    "clean-all": "sf-clean all",
+    "clean:lib": "shx rm -rf lib && shx rm -rf coverage && shx rm -rf .nyc_output && shx rm -f oclif.manifest.json oclif.lock",
     "compile": "wireit",
-    "docs": "sf-docs",
     "format": "wireit",
     "link-check": "wireit",
     "lint": "wireit",
-    "postpack": "sf-clean --ignore-signing-artifacts",
-    "prepack": "sf-prepack",
+    "postpack": "shx rm -f oclif.manifest.json oclif.lock",
+    "prepack": "wireit",
     "test": "wireit",
-    "test:nuts": "nyc mocha \"**/*.nut.ts\" --slow 4500 --timeout 600000 --parallel",
+    "test:compile": "wireit",
+    "test:nuts": "oclif manifest && vitest run --config ./vitest.nut.config.ts",
     "test:only": "wireit",
     "version": "oclif readme"
   },
@@ -126,6 +127,21 @@
       ],
       "output": []
     },
+    "prepack": {
+      "command": "oclif manifest && oclif readme",
+      "files": [
+        "src/commands/apextests/list.ts",
+        "messages/apextests.list.md",
+        "README.md"
+      ],
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "README.md"
+      ],
+      "clean": false
+    },
     "test:compile": {
       "command": "tsc -p \"./test\" --pretty",
       "files": [
@@ -142,7 +158,7 @@
       ]
     },
     "test:only": {
-      "command": "nyc mocha \"test/**/*.test.ts\"",
+      "command": "vitest run --coverage",
       "env": {
         "FORCE_COLOR": "2"
       },
@@ -150,9 +166,8 @@
         "test/**/*.ts",
         "src/**/*.ts",
         "**/tsconfig.json",
-        ".mocha*",
-        "!*.nut.ts",
-        ".nycrc"
+        "vitest.config.ts",
+        "!*.nut.ts"
       ],
       "output": []
     },
@@ -204,6 +219,5 @@
   },
   "exports": "./lib/index.js",
   "type": "module",
-  "author": "Renato Oliveira",
-  "packageManager": "yarn@1.22.22"
+  "author": "Renato Oliveira"
 }
