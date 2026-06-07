@@ -76,6 +76,7 @@
     "lint": "wireit",
     "postpack": "shx rm -f oclif.manifest.json oclif.lock",
     "prepack": "wireit",
+    "prepare": "husky",
     "test": "wireit",
     "test:compile": "wireit",
     "test:nuts": "oclif manifest && vitest run --config ./vitest.nut.config.ts",
