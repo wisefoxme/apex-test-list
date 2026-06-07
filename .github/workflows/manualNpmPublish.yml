@@ -1,4 +1,4 @@
-name: manualNpmPublish
+name: Manual Publish to NPM
 
 on:
   workflow_dispatch:
