@@ -8,22 +8,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  unit-tests:
-    uses: salesforcecli/github-workflows/.github/workflows/unitTest.yml@main
-  nuts:
-    needs: unit-tests
-    uses: salesforcecli/github-workflows/.github/workflows/nut.yml@main
+  test:
+    uses: ./.github/workflows/test.yml
     secrets: inherit
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-      fail-fast: false
-    with:
-      os: ${{ matrix.os }}
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    needs: [unit-tests, nuts]
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
