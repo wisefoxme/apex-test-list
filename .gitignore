@@ -50,3 +50,7 @@ node_modules
 stderr*.txt
 stdout*.txt
 .yarn/install-state.gz
+
+# stryker mutation testing
+.stryker-tmp
+reports
