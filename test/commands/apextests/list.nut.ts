@@ -1,7 +1,7 @@
 import { rm, writeFile, mkdir, rmdir } from 'node:fs/promises';
 import * as path from 'node:path';
 import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
-import { expect } from 'chai';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
 import { SFDX_PROJECT_FILE_NAME } from '../../../src/utils/constants.js';
 
@@ -42,16 +42,16 @@ describe('apextests list NUTs', () => {
   const configJsonString = JSON.stringify(configFile, null, 2);
   const ignoreDir = 'ignore';
 
-  before(async () => {
+  beforeAll(async () => {
     await writeFile(SFDX_PROJECT_FILE_NAME, configJsonString);
     await mkdir(ignoreDir);
   });
 
-  before(async () => {
+  beforeEach(async () => {
     session = await TestSession.create({ devhubAuthStrategy: 'NONE' });
   });
 
-  after(async () => {
+  afterAll(async () => {
     await session?.clean();
     await rm(SFDX_PROJECT_FILE_NAME);
     await rmdir(ignoreDir);

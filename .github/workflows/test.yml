@@ -1,48 +1,95 @@
 name: tests
+
 on:
   push:
-    branches-ignore: [master]
-  workflow_dispatch:
+    branches-ignore:
+      - master
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
   unit-tests:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-      fail-fast: false
+    name: Unit Tests (${{ matrix.os }}, node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['20', '22', '24']
     steps:
       - name: Configure git longpaths if on Windows
         if: ${{ runner.os == 'Windows' }}
         run: git config --system core.longpaths true
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v6.4.0
         with:
-          node-version: 22
-          cache: yarn
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Install Dependencies
+        run: npm ci
 
-      - run: yarn build
+      - name: Build
+        run: npm run build
+      
+      - name: Compile
+        run: npm run test:compile
 
-      - run: yarn test
+      - name: Test with Coverage
+        run: npm run test:only
         env:
           SF_DISABLE_TELEMETRY: true
 
   nuts:
     needs: unit-tests
-    uses: salesforcecli/github-workflows/.github/workflows/nut.yml@3a3a1cac4bf357b29d989b1f779ea2ec13dd4bec
-    secrets: inherit
+    name: NUTs (${{ matrix.os }}, node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
       fail-fast: false
-    with:
-      os: ${{ matrix.os }}
-      nodeVersion: 22
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['20', '22', '24']
+    steps:
+      - name: Configure git longpaths if on Windows
+        if: ${{ runner.os == 'Windows' }}
+        run: git config --system core.longpaths true
+
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup Node
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli@nightly
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Oclif manifest
+        run: npx oclif manifest
+
+      - name: NUTs
+        run: npm run test:nuts
+        env:
+          TESTKIT_AUTH_URL: ${{ secrets.TESTKIT_AUTH_URL }}
+          TESTKIT_HUB_USERNAME: ${{ secrets.TESTKIT_HUB_USERNAME }}
+          TESTKIT_JWT_CLIENT_ID: ${{ secrets.TESTKIT_JWT_CLIENT_ID }}
+          TESTKIT_JWT_KEY: ${{ secrets.TESTKIT_JWT_KEY }}
+          TESTKIT_HUB_INSTANCE: ${{ secrets.TESTKIT_HUB_INSTANCE }}
+          TESTKIT_SETUP_RETRIES: 2
+          SF_DISABLE_TELEMETRY: true

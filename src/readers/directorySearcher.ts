@@ -43,6 +43,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
       const formattedName = `${fileFullName[1] === 'cls' ? 'ApexClass' : 'ApexTrigger'}:${fileFullName[0]}`;
       return names.includes(formattedName);
     }
+    return false;
   });
 
   const testClassNameHandler = (fileName: string): void => {

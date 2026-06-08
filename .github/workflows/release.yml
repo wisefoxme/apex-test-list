@@ -8,28 +8,18 @@ permissions:
   pull-requests: write
 
 jobs:
-  unit-tests:
-    uses: salesforcecli/github-workflows/.github/workflows/unitTest.yml@main
-  nuts:
-    needs: unit-tests
-    uses: salesforcecli/github-workflows/.github/workflows/nut.yml@main
+  test:
+    uses: ./.github/workflows/test.yml
     secrets: inherit
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-      fail-fast: false
-    with:
-      os: ${{ matrix.os }}
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    needs: [unit-tests, nuts]
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - name: Release Please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           release-type: node
 
@@ -46,14 +36,14 @@ jobs:
         uses: actions/setup-node@v4.0.1
         with:
           node-version: 22
-          cache: yarn
+          cache: npm
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install Dependencies
-        run: yarn install
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Publish to NPM
         run: npm publish --access public --tag latest

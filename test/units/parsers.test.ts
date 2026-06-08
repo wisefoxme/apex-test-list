@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { expect } from 'chai';
+import { describe, it, expect } from 'vitest';
 
 import { extractTypeNamesFromManifestFile } from '../../src/parsers/manifestParser.js';
 import { parseTestSuiteFile, parseTestSuitesNames } from '../../src/parsers/testSuiteParser.js';
-import { parseTestsNames } from '../../src/parsers/testNameParser.js'; 
+import { parseTestsNames } from '../../src/parsers/testNameParser.js';
 
 describe('tests of the extractTypeNamesFromManifestFile fn', () => {
   it('should read an empty manifest', async () => {
