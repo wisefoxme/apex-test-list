@@ -7,6 +7,11 @@ on:
 
   workflow_dispatch:
     inputs:
+      github_ref:
+        description: 'Existing GitHub branch or tag to publish'
+        required: false
+        default: master
+        type: string
       npm_tag:
         description: 'NPM dist-tag'
         required: false
@@ -74,10 +79,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Checkout master
+      - name: Checkout specified git ref
         uses: actions/checkout@v6
         with:
-          ref: master
+          ref: ${{ inputs.github_ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v6
