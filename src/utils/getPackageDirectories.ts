@@ -16,7 +16,6 @@ export async function getPackageDirectories(
     throw new Error('Failed to retrieve repository root or sfdx-project.json path.');
   }
 
-  process.chdir(repoRoot);
   const sfdxProjectRaw: string = await readFile(dxConfigFilePath, 'utf-8');
   const sfdxProject: SfdxProject = JSON.parse(sfdxProjectRaw) as SfdxProject;
   const packageDirectories = sfdxProject.packageDirectories

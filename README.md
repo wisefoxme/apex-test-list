@@ -1,6 +1,8 @@
 # Apex Test List
 
-[![NPM](https://img.shields.io/npm/v/apextestlist.svg?label=apextestlist)](https://www.npmjs.com/package/apextestlist) [![Downloads/week](https://img.shields.io/npm/dw/apextestlist.svg)](https://npmjs.org/package/apextestlist) [![License](https://img.shields.io/badge/License-BSD%203--Clause-brightgreen.svg)](https://raw.githubusercontent.com/wisefoxme/apex-test-list/refs/heads/master/LICENSE)
+[![NPM](https://img.shields.io/npm/v/apextestlist.svg?label=apextestlist)](https://www.npmjs.com/package/apextestlist)
+[![Downloads/week](https://img.shields.io/npm/dw/apextestlist.svg)](https://npmjs.org/package/apextestlist)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-brightgreen.svg)](https://raw.githubusercontent.com/wisefoxme/apex-test-list/refs/heads/master/LICENSE)
 
 A plugin that generates a list of tests that your automated process should run, so you can save time by not running all tests in your Salesforce org and avoid specifying them manually.
 

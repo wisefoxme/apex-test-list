@@ -1,0 +1,48 @@
+# Manual smoke test following published plugin.
+# Reuses the NUT suite with TESTKIT_EXECUTABLE_PATH=sf so commands run through the real CLI.
+name: Smoke test (published plugin)
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  published-plugin-nuts:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Salesforce CLI and plugin
+        shell: bash
+        run: |
+          npm install --global @salesforce/cli
+          echo 'y' | sf plugins install --force apextestlist@latest
+          sf version --verbose --json
+
+      - name: Use runner Salesforce CLI home in Testkit
+        shell: bash
+        run: node -e "require('fs').appendFileSync(process.env.GITHUB_ENV, 'TESTKIT_HOMEDIR=' + require('os').homedir() + '\n')"
+
+      - name: Run the non-unit test using the Salesforce CLI
+        run: npm run test:nuts
+        env:
+          TESTKIT_EXECUTABLE_PATH: sf
+          SF_DISABLE_TELEMETRY: true

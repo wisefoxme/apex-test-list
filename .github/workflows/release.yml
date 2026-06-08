@@ -103,3 +103,12 @@ jobs:
             --provenance \
             --access public \
             --tag "${{ inputs.npm_tag }}"
+
+  smoke-test:
+    name: Smoke Test
+    needs: [publish-release, publish-manual]
+    if: |
+      always() &&
+      (needs.publish-release.result == 'success' || needs.publish-manual.result == 'success')
+    uses: ./.github/workflows/smoke-test.yml
+    secrets: inherit
