@@ -5,6 +5,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.8](https://github.com/wisefoxme/apex-test-list/compare/v1.13.7...v1.13.8) (2026-06-08)
+
+
+### Bug Fixes
+
+* **deps:** bump @salesforce/source-deploy-retrieve ([#329](https://github.com/wisefoxme/apex-test-list/issues/329)) ([68129dd](https://github.com/wisefoxme/apex-test-list/commit/68129dd74f97457ac1a52f09e67dbd31ffa13159))
+* pin all dependencies to exact versions ([#335](https://github.com/wisefoxme/apex-test-list/issues/335)) ([a0e1c12](https://github.com/wisefoxme/apex-test-list/commit/a0e1c12c11be09e3da4e14936947ede2299571c2))
+
 ## [1.13.7](https://github.com/wisefoxme/apex-test-list/compare/v1.13.6...v1.13.7) (2026-06-08)
 
 
