@@ -3,7 +3,7 @@ name: Mutation Testing
 on:
   pull_request:
     branches:
-      - main
+      - master
     paths-ignore:
       - '**.md'
       - 'defaults/**'
@@ -92,9 +92,9 @@ jobs:
         # The dashboard reporter (configured in stryker.config.json) uploads the
         # mutation score to https://dashboard.stryker-mutator.io. The API key is
         # injected from the STRYKER_DASHBOARD_API_KEY secret; --dashboard.version
-        # overrides the hardcoded `main` so that the dashboard partitions runs
+        # overrides the hardcoded `master` so that the dashboard partitions runs
         # per ref (e.g. release branches, tags) when this job is dispatched from
-        # somewhere other than main.
+        # somewhere other than master.
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
         run: npm run test:mutation -- --concurrency 3 --dashboard.version "${{ github.ref_name }}"
