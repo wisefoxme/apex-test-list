@@ -80,7 +80,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          npm publish \
+          NODE_AUTH_TOKEN="" npm publish \
             --provenance \
             --access public \
             --tag ${{ github.event_name == 'workflow_dispatch' && inputs.npm_tag || 'latest' }}
