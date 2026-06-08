@@ -24,7 +24,7 @@
   },
   "dashboard": {
     "project": "github.com/wisefoxme/apex-test-list",
-    "version": "main",
+    "version": "master",
     "reportType": "full"
   },
   "timeoutMS": 600000,
