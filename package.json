@@ -6,7 +6,7 @@
     "@oclif/core": "4.11.2",
     "@salesforce/core": "8.23.3",
     "@salesforce/sf-plugins-core": "12.2.16",
-    "@salesforce/source-deploy-retrieve": "12.25.0",
+    "@salesforce/source-deploy-retrieve": "12.36.2",
     "async": "3.2.6",
     "xml2js": "0.6.2",
     "yaml": "2.8.0"
