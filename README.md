@@ -4,6 +4,7 @@
 [![Downloads/week](https://img.shields.io/npm/dw/apextestlist.svg)](https://npmjs.org/package/apextestlist)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-brightgreen.svg)](https://raw.githubusercontent.com/wisefoxme/apex-test-list/refs/heads/master/LICENSE)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fwisefoxme%2Fapex-test-list%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/wisefoxme/apex-test-list/master)
+![Codecov](https://img.shields.io/codecov/c/github/wisefoxme/apex-test-list?style=plastic)
 
 A plugin that generates a list of tests that your automated process should run, so you can save time by not running all tests in your Salesforce org and avoid specifying them manually.
 
