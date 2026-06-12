@@ -229,24 +229,17 @@ jobs:
         run: |
           sf project deploy start \
             --manifest package/package.xml \
-            --test-level RunSpecifiedTests \
             $(sf apextests list --manifest package/package.xml)
 ```
 
 Using the metadata filter approach with `.test-dependencies.yml`:
 
 ```yaml
-- name: Install SF plugins
-  run: |
-    echo y | sf plugins install sfdx-git-delta
-    echo y | sf plugins install apextestlist
-
 - name: Deploy with metadata-driven test selection
   run: |
     sf sgd source delta --to HEAD --from HEAD~1 --output-dir .
     sf project deploy start \
       --manifest package/package.xml \
-      --test-level RunSpecifiedTests \
       $(sf apextests list --manifest package/package.xml --filter-by-metadata)
 ```
 
