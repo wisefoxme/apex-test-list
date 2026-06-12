@@ -38,6 +38,7 @@ export async function searchDirectoryForTestNamesInTestSuites(
   // list of test classes for the next steps
   const testSuiteNameHandler = (fileName: string): void => {
     const path = `${directory}/${fileName}`;
+    // Stryker disable next-line StringLiteral: empty-string encoding returns a Buffer decoded as UTF-8 by default — identical output for ASCII XML
     const data = readFileSync(path, 'utf-8');
     const classes = parseTestSuiteFile(data);
 

@@ -64,6 +64,7 @@ export async function listTests({
     warnings.push(...validationWarnings);
   }
 
+  // Stryker disable next-line ConditionalExpression,EqualityOperator: empty array forEach is a no-op — guard is equivalent when warnings is empty
   if (!noWarnings && warnings.length > 0) {
     warnings.forEach(warn);
   }

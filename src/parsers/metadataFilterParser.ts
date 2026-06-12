@@ -10,6 +10,7 @@ function isTestMetadataMap(obj: unknown): obj is TestMetadataMap {
   if (typeof obj !== 'object' || obj === null) return false;
 
   return Object.entries(obj).every(
+    // Stryker disable next-line ConditionalExpression: Object.entries always yields string keys — typeof key === 'string' is unconditionally true
     ([key, value]) => typeof key === 'string' && Array.isArray(value) && value.every((v) => typeof v === 'string'),
   );
 }
