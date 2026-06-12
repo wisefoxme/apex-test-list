@@ -61,12 +61,6 @@ export async function searchDirectoryForTestNamesInTestSuites(
   // initialize the processor with the names of files we want to process
   await testSuiteNameProcessor.push(suiteFiles);
 
-  // make sure no dangling process is left before continuing
-  /* v8 ignore next 3 */
-  if (testSuiteNameProcessor.length() > 0) {
-    await testSuiteNameProcessor.drain();
-  }
-
   if (requiresWildcardSearch && packageDirectories) {
     for (const pkgDir of packageDirectories) {
       // eslint-disable-next-line no-await-in-loop

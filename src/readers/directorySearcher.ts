@@ -84,11 +84,6 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
 
   await testClassNameProcessor.push(apexFiles);
 
-  /* v8 ignore next 3 */
-  if (testClassNameProcessor.length() > 0) {
-    await testClassNameProcessor.drain();
-  }
-
   return {
     classes: Array.from(testClassesNames),
     testSuites: Array.from(testSuitesNames),

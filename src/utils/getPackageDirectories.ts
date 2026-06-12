@@ -38,10 +38,8 @@ async function searchForSubFolders(dxDirectory: string, subDirectoryNames: strin
 
       if (stats.isDirectory() && subDirectoryNames.includes(file)) {
         return [filePath];
-        /* v8 ignore start */
       } else if (stats.isDirectory()) {
         return searchForSubFolders(filePath, subDirectoryNames);
-        /* v8 ignore stop */
       }
       return [];
     }),

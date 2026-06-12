@@ -1,4 +1,5 @@
 import { rm, writeFile, mkdir, rmdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { listTests } from '../../../src/core/listTests.js';
 import { SFDX_PROJECT_FILE_NAME } from '../../../src/utils/constants.js';
@@ -164,5 +165,36 @@ describe('apextests list', () => {
     });
     expect(result.command).to.equal('--tests SampleTest --tests SuperSampleTest');
     expect(warnings.join('\n')).to.include('');
+  });
+});
+
+describe('apextests list with nested package directory structure', () => {
+  const nestedPkg = 'nested-test-pkg';
+
+  beforeAll(async () => {
+    await mkdir(join(nestedPkg, 'main', 'classes'), { recursive: true });
+    await writeFile(
+      join(nestedPkg, 'main', 'classes', 'NestedClassTest.cls'),
+      '@isTest\npublic class NestedClassTest {}',
+    );
+    await writeFile(
+      SFDX_PROJECT_FILE_NAME,
+      JSON.stringify({
+        packageDirectories: [{ path: nestedPkg, default: true }],
+        namespace: '',
+        sfdcLoginUrl: 'https://login.salesforce.com',
+        sourceApiVersion: '62.0',
+      }),
+    );
+  });
+
+  afterAll(async () => {
+    await rm(nestedPkg, { recursive: true });
+    await rm(SFDX_PROJECT_FILE_NAME);
+  });
+
+  it('finds classes nested inside non-metadata subdirectories', async () => {
+    const result = await listTests({});
+    expect(result.tests).to.include('NestedClassTest');
   });
 });
