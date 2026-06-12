@@ -199,21 +199,38 @@ A typical pipeline using [`sfdx-git-delta`](https://github.com/scolladon/sfdx-gi
 
 ```yaml
 # GitHub Actions example
-- name: Install SF plugins
-  run: |
-    echo y | sf plugins install sfdx-git-delta
-    echo y | sf plugins install apextestlist
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-- name: Generate delta manifest
-  run: |
-    sf sgd source delta --to HEAD --from HEAD~1 --output-dir .
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-- name: Deploy with targeted tests
-  run: |
-    sf project deploy start \
-      --manifest package/package.xml \
-      --test-level RunSpecifiedTests \
-      $(sf apextests list --manifest package/package.xml)
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Install SF plugins
+        run: |
+          echo y | sf plugins install sfdx-git-delta
+          echo y | sf plugins install apextestlist
+
+      - name: Generate delta manifest
+        run: |
+          sf sgd source delta --to HEAD --from HEAD~1 --output-dir .
+
+      - name: Deploy with targeted tests
+        run: |
+          sf project deploy start \
+            --manifest package/package.xml \
+            --test-level RunSpecifiedTests \
+            $(sf apextests list --manifest package/package.xml)
 ```
 
 Using the metadata filter approach with `.test-dependencies.yml`:
