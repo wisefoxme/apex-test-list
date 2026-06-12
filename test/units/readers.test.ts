@@ -1,3 +1,6 @@
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 import { matchWildcard } from '../../src/utils/matchWildcard.js';
@@ -9,7 +12,9 @@ describe('tests of the searchDirectoryForTestNamesInTestSuites fn', () => {
     const suitePath = './samples/testSuites';
     const result = await searchDirectoryForTestNamesInTestSuites(suitePath, ['./samples/classes']);
 
-    expect(result).to.deep.equal(['UnlistedTest', 'NS.UnlistedTest', 'Sample2Test', 'SampleTriggerTest', 'SampleTest'].sort());
+    expect(result).to.deep.equal(
+      ['UnlistedTest', 'NS.UnlistedTest', 'Sample2Test', 'SampleTriggerTest', 'SampleTest'].sort(),
+    );
   });
 });
 
@@ -36,6 +41,41 @@ describe('tests of the searchDirectoryForTestClasses fn with no annotations', ()
       testSuites: [],
       warnings: ['File "NoAnnotations.cls" does not contain @tests, @testsuites, or @istest annotations'],
     });
+  });
+});
+
+describe('searchDirectoryForTestClasses error handling', () => {
+  it('should throw on invalid directory', async () => {
+    await expect(searchDirectoryForTestClasses('/nonexistent/invalid/path', null)).rejects.toThrow(
+      'Invalid or inaccessible directory',
+    );
+  });
+});
+
+describe('searchDirectoryForTestNamesInTestSuites error handling', () => {
+  it('should throw on invalid directory', async () => {
+    await expect(searchDirectoryForTestNamesInTestSuites('/nonexistent/invalid/path', [])).rejects.toThrow(
+      'Invalid or inaccessible directory',
+    );
+  });
+});
+
+describe('searchDirectoryForTestNamesInTestSuites with no wildcards', () => {
+  it('should skip wildcard search when suites contain no wildcards', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'suite-no-wildcard-'));
+    await writeFile(
+      join(tempDir, 'Plain.testSuite-meta.xml'),
+      `<?xml version="1.0" encoding="UTF-8"?>
+<ApexTestSuite xmlns="http://soap.sforce.com/2006/04/metadata">
+  <testClassName>PlainTest</testClassName>
+</ApexTestSuite>`,
+    );
+    try {
+      const result = await searchDirectoryForTestNamesInTestSuites(tempDir, []);
+      expect(result).to.deep.equal(['PlainTest']);
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
   });
 });
 

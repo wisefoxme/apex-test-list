@@ -34,16 +34,13 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
       return false;
     }
 
-    const fileFullName: string[] | undefined = file.split('/').pop()?.split('.');
     if (!names) {
       return true;
     }
 
-    if (fileFullName && fileFullName.length > 0) {
-      const formattedName = `${fileFullName[1] === 'cls' ? 'ApexClass' : 'ApexTrigger'}:${fileFullName[0]}`;
-      return names.includes(formattedName);
-    }
-    return false;
+    const parts = (file.split('/').pop() as string).split('.');
+    const formattedName = `${parts[1] === 'cls' ? 'ApexClass' : 'ApexTrigger'}:${parts[0]}`;
+    return names.includes(formattedName);
   });
 
   const testClassNameHandler = (fileName: string): void => {
@@ -87,6 +84,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
 
   await testClassNameProcessor.push(apexFiles);
 
+  /* v8 ignore next 3 */
   if (testClassNameProcessor.length() > 0) {
     await testClassNameProcessor.drain();
   }

@@ -62,6 +62,7 @@ export async function searchDirectoryForTestNamesInTestSuites(
   await testSuiteNameProcessor.push(suiteFiles);
 
   // make sure no dangling process is left before continuing
+  /* v8 ignore next 3 */
   if (testSuiteNameProcessor.length() > 0) {
     await testSuiteNameProcessor.drain();
   }

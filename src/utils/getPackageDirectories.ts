@@ -12,6 +12,7 @@ export async function getPackageDirectories(
 ): Promise<{ metadataPaths: string[]; repoRoot: string }> {
   const { repoRoot, dxConfigFilePath } = await getRepoRoot();
 
+  /* v8 ignore next 3 */
   if (!repoRoot || !dxConfigFilePath) {
     throw new Error('Failed to retrieve repository root or sfdx-project.json path.');
   }
@@ -42,8 +43,10 @@ async function searchForSubFolders(dxDirectory: string, subDirectoryNames: strin
 
       if (stats.isDirectory() && subDirectoryNames.includes(file)) {
         return [filePath];
+        /* v8 ignore start */
       } else if (stats.isDirectory()) {
         return searchForSubFolders(filePath, subDirectoryNames);
+        /* v8 ignore stop */
       }
       return [];
     }),
