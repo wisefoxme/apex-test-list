@@ -50,6 +50,7 @@ jobs:
       - name: Run incremental mutation testing
         env:
           MUTATION_BASE_BRANCH: origin/${{ github.base_ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run test:mutation:incremental
 
       - name: Upload mutation report
