@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+In this sample file, ApexTrigger is listed before ApexClass to test that
+results are sorted alphabetically regardless of XML declaration order.
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <types>
+    <members>Sample</members>
+    <name>ApexTrigger</name>
+  </types>
+  <types>
+    <members>Sample</members>
+    <members>SampleTest</members>
+    <name>ApexClass</name>
+  </types>
+  <version>62.0</version>
+</Package>

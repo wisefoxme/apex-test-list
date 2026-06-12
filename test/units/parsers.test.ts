@@ -27,6 +27,15 @@ describe('tests of the extractTypeNamesFromManifestFile fn', () => {
     expect(result.length).toBeGreaterThan(1);
     expect(result).toEqual([...result].sort((a, b) => a.localeCompare(b)));
   });
+
+  it('should sort alphabetically when ApexTrigger is declared before ApexClass in manifest', async () => {
+    const result = await extractTypeNamesFromManifestFile('./samples/samplePackageTriggerFirst.xml');
+    expect(result.length).toBeGreaterThan(1);
+    expect(result).toEqual([...result].sort((a, b) => a.localeCompare(b)));
+    expect(result.findIndex((r) => r.startsWith('ApexClass'))).toBeLessThan(
+      result.findIndex((r) => r.startsWith('ApexTrigger')),
+    );
+  });
 });
 
 describe('tests of the parseTestSuiteFile fn', () => {
@@ -175,6 +184,16 @@ describe('tests of the loadTestMetadataDependencies fn', () => {
   it('should throw when array elements are not strings', async () => {
     const tempFile = join(tmpdir(), `non-string-${Date.now()}.yml`);
     await writeFile(tempFile, 'TestClass:\n  - valid\n  - 123');
+    try {
+      await expect(loadTestMetadataDependencies(tempFile)).rejects.toThrow('Invalid test metadata dependencies format');
+    } finally {
+      await unlink(tempFile);
+    }
+  });
+
+  it('should throw when at least one entry is invalid even if another is valid', async () => {
+    const tempFile = join(tmpdir(), `mixed-${Date.now()}.yml`);
+    await writeFile(tempFile, 'ValidClass:\n  - ValidTest\nInvalidClass: not-an-array');
     try {
       await expect(loadTestMetadataDependencies(tempFile)).rejects.toThrow('Invalid test metadata dependencies format');
     } finally {
