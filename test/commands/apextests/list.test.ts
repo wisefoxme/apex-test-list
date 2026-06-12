@@ -139,6 +139,7 @@ describe('apextests list', () => {
       warn: (msg) => warnings.push(msg),
     });
     expect(result.command).to.equal('');
+    expect(result.tests).toEqual([]);
     expect(warnings.join('\n')).to.include(
       'File "NoAnnotations.cls" does not contain @tests, @testsuites, or @istest annotations',
     );
@@ -152,7 +153,9 @@ describe('apextests list', () => {
       warn: (msg) => warnings.push(msg),
     });
     expect(result.command).to.equal('');
+    expect(result.tests).toEqual([]);
     expect(warnings.join('\n')).to.include('No test methods found');
+    expect(warnings.join('\n')).not.toContain('NoAnnotations.cls');
   });
 
   it('runs list with the metadata filter and manifest selected', async () => {
@@ -196,5 +199,48 @@ describe('apextests list with nested package directory structure', () => {
   it('finds classes nested inside non-metadata subdirectories', async () => {
     const result = await listTests({});
     expect(result.tests).to.include('NestedClassTest');
+  });
+
+  it('does not call warn when all classes have proper annotations', async () => {
+    const warnCalls: string[] = [];
+    await listTests({ warn: (msg) => warnCalls.push(msg) });
+    expect(warnCalls).toEqual([]);
+  });
+});
+
+describe('apextests list trims whitespace from test suite class names', () => {
+  const pkgDir = 'whitespace-suite-pkg';
+
+  beforeAll(async () => {
+    await mkdir(join(pkgDir, 'classes'), { recursive: true });
+    await mkdir(join(pkgDir, 'testSuites'), { recursive: true });
+    await writeFile(join(pkgDir, 'classes', 'AnnotatedClass.cls'), '// @TestSuites: PaddedSuite');
+    await writeFile(
+      join(pkgDir, 'testSuites', 'PaddedSuite.testSuite-meta.xml'),
+      `<?xml version="1.0" encoding="UTF-8"?>
+<ApexTestSuite xmlns="http://soap.sforce.com/2006/04/metadata">
+  <testClassName>  PaddedTest  </testClassName>
+</ApexTestSuite>`,
+    );
+    await writeFile(
+      SFDX_PROJECT_FILE_NAME,
+      JSON.stringify({
+        packageDirectories: [{ path: pkgDir, default: true }],
+        namespace: '',
+        sfdcLoginUrl: 'https://login.salesforce.com',
+        sourceApiVersion: '62.0',
+      }),
+    );
+  });
+
+  afterAll(async () => {
+    await rm(pkgDir, { recursive: true });
+    await rm(SFDX_PROJECT_FILE_NAME);
+  });
+
+  it('trims whitespace from test suite class names', async () => {
+    const result = await listTests({});
+    expect(result.tests).toContain('PaddedTest');
+    expect(result.tests).not.toContain('  PaddedTest  ');
   });
 });
