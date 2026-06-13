@@ -20,7 +20,7 @@
     "@salesforce/prettier-config": "0.0.4",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",
-    "@types/async": "3.2.24",
+    "@types/async": "3.2.25",
     "@types/node": "22.18.12",
     "@types/xml2js": "0.4.14",
     "@vitest/coverage-v8": "4.1.8",
