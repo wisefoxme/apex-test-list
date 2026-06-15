@@ -9,7 +9,7 @@
     "@salesforce/source-deploy-retrieve": "12.36.2",
     "async": "3.2.6",
     "xml2js": "0.6.2",
-    "yaml": "2.8.0"
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@commitlint/cli": "19.6.0",
