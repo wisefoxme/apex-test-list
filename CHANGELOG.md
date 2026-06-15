@@ -5,6 +5,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.9](https://github.com/wisefoxme/apex-test-list/compare/v1.13.8...v1.13.9) (2026-06-15)
+
+
+### Bug Fixes
+
+* **deps:** bump @salesforce/core from 8.23.3 to 8.31.1 ([#350](https://github.com/wisefoxme/apex-test-list/issues/350)) ([39ce96f](https://github.com/wisefoxme/apex-test-list/commit/39ce96f978f58e42b0cd96d5cc207d54a9faebdb))
+* **deps:** bump yaml from 2.8.0 to 2.9.0 ([#348](https://github.com/wisefoxme/apex-test-list/issues/348)) ([d3860bb](https://github.com/wisefoxme/apex-test-list/commit/d3860bbf687970589afb303b151b3b24743518fa))
+
 ## [1.13.8](https://github.com/wisefoxme/apex-test-list/compare/v1.13.7...v1.13.8) (2026-06-08)
 
 
