@@ -26,7 +26,7 @@
     "@vitest/coverage-v8": "4.1.8",
     "eslint-config-salesforce-typescript": "4.0.1",
     "husky": "9.1.6",
-    "oclif": "4.22.32",
+    "oclif": "4.23.16",
     "prettier": "3.8.4",
     "pretty-quick": "4.2.2",
     "shx": "0.4.0",
