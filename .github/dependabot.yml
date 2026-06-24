@@ -20,3 +20,11 @@ updates:
       - dependency-name: '@salesforce/dev-scripts'
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+    groups:
+      stryker:
+        patterns:
+          - '@stryker-mutator/*'
+      vitest:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
