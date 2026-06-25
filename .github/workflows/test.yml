@@ -38,12 +38,9 @@ jobs:
 
       - name: Build
         run: npm run build
-      
-      - name: Compile
-        run: npm run test:compile
 
-      - name: Test with Coverage
-        run: npm run test:only
+      - name: Test
+        run: npm run test
         env:
           SF_DISABLE_TELEMETRY: true
 
@@ -84,12 +81,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
-
-      - name: Compile
-        run: npm run compile
-
-      - name: Oclif manifest
-        run: npx oclif manifest
 
       - name: NUTs
         run: npm run test:nuts
