@@ -67,9 +67,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
-
       - name: Publish to NPM
         run: NODE_AUTH_TOKEN="" npm publish --provenance --access public --tag latest
 
@@ -93,9 +90,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
-
-      - name: Build
-        run: npm run build
 
       - name: Publish to NPM
         run: |
