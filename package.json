@@ -23,7 +23,7 @@
     "@types/async": "3.2.25",
     "@types/node": "22.18.12",
     "@types/xml2js": "0.4.14",
-    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/coverage-v8": "4.1.9",
     "eslint-config-salesforce-typescript": "4.0.1",
     "husky": "9.1.6",
     "oclif": "4.23.16",
@@ -32,7 +32,7 @@
     "shx": "0.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "vitest": "4.1.8",
+    "vitest": "4.1.9",
     "wireit": "0.14.9"
   },
   "engines": {
