@@ -12,22 +12,20 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.1",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@salesforce/cli-plugins-testkit": "5.3.39",
     "@salesforce/dev-config": "4.3.3",
-    "@salesforce/prettier-config": "0.0.4",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",
     "@types/async": "3.2.25",
     "@types/node": "22.18.12",
     "@types/xml2js": "0.4.14",
     "@vitest/coverage-v8": "4.1.9",
-    "eslint-config-salesforce-typescript": "4.0.1",
     "husky": "9.1.6",
+    "lint-staged": "17.0.8",
     "oclif": "4.23.27",
-    "prettier": "3.8.4",
-    "pretty-quick": "4.2.2",
     "shx": "0.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
@@ -108,21 +106,21 @@
       "clean": "if-file-deleted"
     },
     "format": {
-      "command": "prettier --write \"+(src|test)/**/*.+(ts|js|json)\"",
+      "command": "biome format --write src test",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
-        ".prettier*"
+        "biome.json"
       ],
       "output": []
     },
     "lint": {
-      "command": "eslint src test --color --cache --cache-location .eslintcache",
+      "command": "biome check src test",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
         "messages/**",
-        "**/.eslint*",
+        "biome.json",
         "**/tsconfig.json"
       ],
       "output": []

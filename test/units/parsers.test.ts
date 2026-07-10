@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { writeFile, unlink } from 'node:fs/promises';
-import { join } from 'node:path';
+import { unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { describe, it, expect } from 'vitest';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 import { extractTypeNamesFromManifestFile } from '../../src/parsers/manifestParser.js';
-import { parseTestSuiteFile, parseTestSuitesNames } from '../../src/parsers/testSuiteParser.js';
-import { parseTestsNames } from '../../src/parsers/testNameParser.js';
 import { loadTestMetadataDependencies, selectRelevantTests } from '../../src/parsers/metadataFilterParser.js';
+import { parseTestsNames } from '../../src/parsers/testNameParser.js';
+import { parseTestSuiteFile, parseTestSuitesNames } from '../../src/parsers/testSuiteParser.js';
 
 describe('tests of the extractTypeNamesFromManifestFile fn', () => {
   it('should read an empty manifest', async () => {

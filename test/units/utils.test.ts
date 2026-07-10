@@ -1,12 +1,11 @@
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
-import { tmpdir, availableParallelism } from 'node:os';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { availableParallelism, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, it, expect, vi, afterEach } from 'vitest';
-
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getConcurrencyThreshold } from '../../src/utils/concurrencyThreshold.js';
 import { formatList } from '../../src/utils/formatters.js';
 import { getRepoRoot } from '../../src/utils/getRepoRoot.js';
 import { validateTests } from '../../src/utils/validateTests.js';
-import { getConcurrencyThreshold } from '../../src/utils/concurrencyThreshold.js';
 
 describe('formatList', () => {
   it('sfdx format joins tests with space', async () => {

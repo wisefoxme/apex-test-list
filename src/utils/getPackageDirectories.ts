@@ -1,11 +1,10 @@
 'use strict';
 
-import { resolve, join, basename } from 'node:path';
-import { readFile, readdir, stat } from 'node:fs/promises';
-
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { basename, join, resolve } from 'node:path';
+import { SEARCHABLE_METADATA_FOLDERS } from './constants.js';
 import { getRepoRoot } from './getRepoRoot.js';
 import { SfdxProject } from './types.js';
-import { SEARCHABLE_METADATA_FOLDERS } from './constants.js';
 
 export async function getPackageDirectories(
   ignoreDirs: string[],

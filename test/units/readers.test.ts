@@ -1,11 +1,10 @@
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, it, expect } from 'vitest';
-
-import { matchWildcard } from '../../src/utils/matchWildcard.js';
+import { describe, expect, it } from 'vitest';
 import { searchDirectoryForTestClasses } from '../../src/readers/directorySearcher.js';
 import { searchDirectoryForTestNamesInTestSuites } from '../../src/readers/testSuiteSearcher.js';
+import { matchWildcard } from '../../src/utils/matchWildcard.js';
 
 describe('tests of the searchDirectoryForTestNamesInTestSuites fn', () => {
   it('should read the sample suite from the file', async () => {
