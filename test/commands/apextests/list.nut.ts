@@ -1,7 +1,7 @@
-import { rm, writeFile, mkdir, rmdir } from 'node:fs/promises';
+import { mkdir, rm, rmdir, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import { execCmd, TestSession } from '@salesforce/cli-plugins-testkit';
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { SFDX_PROJECT_FILE_NAME } from '../../../src/utils/constants.js';
 
@@ -73,16 +73,12 @@ describe('apextests list NUTs', () => {
   it('runs list with --json', async () => {
     const command = `apextests list --json -d ${ignoreDir}`;
     const output = execCmd(command, { ensureExitCode: 0 }).shellOutput.stdout;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(JSON.parse(output).result.command).to.equal(`--tests ${TEST_LIST.join(' --tests ')}`);
   });
 
   it('runs list --format csv', async () => {
     const command = `apextests list ${['--format', 'csv'].join(' ')} --json -d ${ignoreDir}`;
     const output = execCmd(command, { ensureExitCode: 0 }).shellOutput.stdout;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(JSON.parse(output).result.command).to.equal(TEST_LIST.join(','));
   });
 
@@ -96,16 +92,12 @@ describe('apextests list NUTs', () => {
   it('runs list with --json and validates tests exist', async () => {
     const command = `apextests list --json --ignore-missing-tests -d ${ignoreDir}`;
     const output = execCmd(command, { ensureExitCode: 0 }).shellOutput.stdout;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(JSON.parse(output).result.command).to.equal(`--tests ${VALIDATED_TEST_LIST.join(' --tests ')}`);
   });
 
   it('runs list --format csv and validates tests exist', async () => {
     const command = `apextests list ${['--format', 'csv', '--ignore-missing-tests'].join(' ')} --json -d ${ignoreDir}`;
     const output = execCmd(command, { ensureExitCode: 0 }).shellOutput.stdout;
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(JSON.parse(output).result.command).to.equal(VALIDATED_TEST_LIST.join(','));
   });
 

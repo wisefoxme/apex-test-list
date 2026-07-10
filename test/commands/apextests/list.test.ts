@@ -1,6 +1,6 @@
-import { rm, writeFile, mkdir, rmdir } from 'node:fs/promises';
+import { mkdir, rm, rmdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { listTests } from '../../../src/core/listTests.js';
 import { SFDX_PROJECT_FILE_NAME } from '../../../src/utils/constants.js';
 

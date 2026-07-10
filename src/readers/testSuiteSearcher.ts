@@ -26,7 +26,7 @@ export async function searchDirectoryForTestNamesInTestSuites(
   try {
     readDir = readdirSync(directory, { recursive: true }) as string[];
   } catch (error) {
-    throw new Error(`Invalid or inaccessible directory: ${directory}`);
+    throw new Error(`Invalid or inaccessible directory: ${directory}`, { cause: error });
   }
 
   // Gets the list of test suites
@@ -64,7 +64,6 @@ export async function searchDirectoryForTestNamesInTestSuites(
 
   if (requiresWildcardSearch && packageDirectories) {
     for (const pkgDir of packageDirectories) {
-      // eslint-disable-next-line no-await-in-loop
       const searchResult = await searchDirectoryForTestClasses(pkgDir, null);
       const testClassesInDir = searchResult.classes;
 

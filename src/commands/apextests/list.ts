@@ -1,7 +1,7 @@
 'use strict';
 
-import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import { Messages } from '@salesforce/core';
+import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 
 import { listTests } from '../../core/listTests.js';
 import { ApextestsListResult } from '../../utils/types.js';

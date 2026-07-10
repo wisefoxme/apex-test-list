@@ -2,11 +2,11 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { queue } from 'async';
-import { parseTestSuitesNames } from '../parsers/testSuiteParser.js';
 import { parseTestsNames } from '../parsers/testNameParser.js';
-import { SearchResult } from '../utils/types.js';
-import { TEST_CLASS_ANNOTATION_REGEX, TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
+import { parseTestSuitesNames } from '../parsers/testSuiteParser.js';
 import { getConcurrencyThreshold } from '../utils/concurrencyThreshold.js';
+import { TEST_CLASS_ANNOTATION_REGEX, TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
+import { SearchResult } from '../utils/types.js';
 
 /**
  * Given a certain directory, search its contents for files that end with '.cls' or '.trigger'.
@@ -25,7 +25,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
   try {
     readDir = readdirSync(directory, { recursive: true }) as string[];
   } catch (error) {
-    throw new Error(`Invalid or inaccessible directory: ${directory}`);
+    throw new Error(`Invalid or inaccessible directory: ${directory}`, { cause: error });
   }
 
   // Gets the list of Apex files (classes and triggers)

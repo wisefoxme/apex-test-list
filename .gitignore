@@ -36,7 +36,6 @@ oclif.lock
 
 # -- CLEAN ALL
 *.tsbuildinfo
-.eslintcache
 .wireit
 node_modules
 

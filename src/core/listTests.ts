@@ -1,15 +1,13 @@
-/* eslint-disable no-await-in-loop */
 import { resolve } from 'node:path';
-
-import { getPackageDirectories } from '../utils/getPackageDirectories.js';
-import { validateTests } from '../utils/validateTests.js';
 import { extractTypeNamesFromManifestFile } from '../parsers/manifestParser.js';
-import { formatList } from '../utils/formatters.js';
+import { loadTestMetadataDependencies, selectRelevantTests } from '../parsers/metadataFilterParser.js';
 import { searchDirectoryForTestClasses } from '../readers/directorySearcher.js';
 import { searchDirectoryForTestNamesInTestSuites } from '../readers/testSuiteSearcher.js';
-import { SearchResult, ListTestsOptions, ApextestsListResult } from '../utils/types.js';
 import { METADATA_FILTER_CONFIG } from '../utils/constants.js';
-import { loadTestMetadataDependencies, selectRelevantTests } from '../parsers/metadataFilterParser.js';
+import { formatList } from '../utils/formatters.js';
+import { getPackageDirectories } from '../utils/getPackageDirectories.js';
+import { ApextestsListResult, ListTestsOptions, SearchResult } from '../utils/types.js';
+import { validateTests } from '../utils/validateTests.js';
 
 export async function listTests({
   format = 'sf',
@@ -18,7 +16,9 @@ export async function listTests({
   ignoreDirs = [],
   noWarnings = false,
   filterByMetadata = false,
-  warn = (): void => {},
+  warn = (): void => {
+    // no-op default
+  },
 }: ListTestsOptions): Promise<ApextestsListResult> {
   let testClassesNames: string[] | null = null;
   const testSuitesNames: string[] = [];

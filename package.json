@@ -12,23 +12,20 @@
     "yaml": "2.9.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.1",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
-    "@oclif/plugin-command-snapshot": "5.3.30",
     "@salesforce/cli-plugins-testkit": "5.3.39",
     "@salesforce/dev-config": "4.3.3",
-    "@salesforce/prettier-config": "0.0.4",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",
     "@types/async": "3.2.25",
     "@types/node": "22.18.12",
     "@types/xml2js": "0.4.14",
     "@vitest/coverage-v8": "4.1.9",
-    "eslint-config-salesforce-typescript": "4.0.1",
     "husky": "9.1.6",
+    "lint-staged": "17.0.8",
     "oclif": "4.23.27",
-    "prettier": "3.8.4",
-    "pretty-quick": "4.2.2",
     "shx": "0.4.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
@@ -71,7 +68,9 @@
   },
   "scripts": {
     "build": "wireit",
-    "clean:lib": "shx rm -rf lib coverage .nyc_output",
+    "clean": "wireit",
+    "clean:build": "wireit",
+    "clean:package-manager": "wireit",
     "compile": "wireit",
     "format": "wireit",
     "link-check": "wireit",
@@ -83,8 +82,7 @@
     "test:mutation": "stryker run",
     "test:mutation:incremental": "node scripts/incremental-mutation.mjs",
     "test:nuts": "wireit",
-    "test:only": "wireit",
-    "version": "oclif readme"
+    "test:only": "wireit"
   },
   "publishConfig": {
     "access": "public"
@@ -94,6 +92,34 @@
       "dependencies": [
         "compile",
         "lint"
+      ]
+    },
+    "clean": {
+      "command": "shx rm -rf 'reports/*' oclif.manifest.json oclif.lock 'stderr*.txt' 'stdout*.txt' '.stryker-tmp/*'",
+      "files": [
+        ".stryker-tmp/*",
+        "lib",
+        "oclif.manifest.json",
+        "oclif.lock",
+        "reports/*",
+        "stderr*.txt",
+        "stdout*.txt"
+      ],
+      "dependencies": [
+        "clean:build"
+      ]
+    },
+    "clean:build": {
+      "command": "shx rm -rf lib .wireit",
+      "files": [
+        ".wireit/*",
+        "lib/*"
+      ]
+    },
+    "clean:package-manager": {
+      "command": "shx rm -rf node_modules tsconfig.tsbuildinfo",
+      "files": [
+        "node_modules/*"
       ]
     },
     "compile": {
@@ -110,23 +136,21 @@
       "clean": "if-file-deleted"
     },
     "format": {
-      "command": "prettier --write \"+(src|test|schemas)/**/*.+(ts|js|json)|command-snapshot.json\"",
+      "command": "biome format --write src test",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
-        "schemas/**/*.json",
-        "command-snapshot.json",
-        ".prettier*"
+        "biome.json"
       ],
       "output": []
     },
     "lint": {
-      "command": "eslint src test --color --cache --cache-location .eslintcache",
+      "command": "biome check src test",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
         "messages/**",
-        "**/.eslint*",
+        "biome.json",
         "**/tsconfig.json"
       ],
       "output": []
@@ -185,44 +209,6 @@
         "**/tsconfig.json",
         "vitest.config.ts",
         "!*.nut.ts"
-      ],
-      "output": []
-    },
-    "test:command-reference": {
-      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" commandreference:generate --erroronwarnings",
-      "files": [
-        "src/**/*.ts",
-        "messages/**",
-        "package.json"
-      ],
-      "output": [
-        "tmp/root"
-      ]
-    },
-    "test:deprecation-policy": {
-      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" snapshot:compare",
-      "files": [
-        "src/**/*.ts"
-      ],
-      "output": [],
-      "dependencies": [
-        "compile"
-      ]
-    },
-    "test:json-schema": {
-      "command": "node --loader ts-node/esm --no-warnings=ExperimentalWarning \"./bin/dev.js\" schema:compare",
-      "files": [
-        "src/**/*.ts",
-        "schemas"
-      ],
-      "output": []
-    },
-    "link-check": {
-      "command": "node -e \"process.exit(process.env.CI ? 0 : 1)\" || linkinator \"**/*.md\" --skip \"CHANGELOG.md|node_modules|test/|confluence.internal.salesforce.com|my.salesforce.com|%s\" --markdown --retry --directory-listing --verbosity error",
-      "files": [
-        "./*.md",
-        "./!(CHANGELOG).md",
-        "messages/**/*.md"
       ],
       "output": []
     }
