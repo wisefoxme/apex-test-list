@@ -68,7 +68,9 @@
   },
   "scripts": {
     "build": "wireit",
-    "clean:lib": "shx rm -rf lib coverage .nyc_output",
+    "clean": "wireit",
+    "clean:build": "wireit",
+    "clean:package-manager": "wireit",
     "compile": "wireit",
     "format": "wireit",
     "link-check": "wireit",
@@ -90,6 +92,34 @@
       "dependencies": [
         "compile",
         "lint"
+      ]
+    },
+    "clean": {
+      "command": "shx rm -rf 'reports/*' oclif.manifest.json oclif.lock 'stderr*.txt' 'stdout*.txt' '.stryker-tmp/*'",
+      "files": [
+        ".stryker-tmp/*",
+        "lib",
+        "oclif.manifest.json",
+        "oclif.lock",
+        "reports/*",
+        "stderr*.txt",
+        "stdout*.txt"
+      ],
+      "dependencies": [
+        "clean:build"
+      ]
+    },
+    "clean:build": {
+      "command": "shx rm -rf lib .wireit",
+      "files": [
+        ".wireit/*",
+        "lib/*"
+      ]
+    },
+    "clean:package-manager": {
+      "command": "shx rm -rf node_modules tsconfig.tsbuildinfo",
+      "files": [
+        "node_modules/*"
       ]
     },
     "compile": {
