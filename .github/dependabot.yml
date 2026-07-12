@@ -29,6 +29,7 @@ updates:
           - 'vitest'
           - '@vitest/*'
       salesforce:
+        patterns:
           - '@salesforce/*'
           - '@oclif/*'
           - 'oclif'
