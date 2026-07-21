@@ -3,10 +3,10 @@
   "description": "A plugin that generates a list of apex test and test suite names for use in CI/CD pipelines.",
   "version": "1.13.10",
   "dependencies": {
-    "@oclif/core": "4.11.2",
-    "@salesforce/core": "8.31.1",
-    "@salesforce/sf-plugins-core": "12.2.16",
-    "@salesforce/source-deploy-retrieve": "12.36.3",
+    "@oclif/core": "4.11.14",
+    "@salesforce/core": "8.32.4",
+    "@salesforce/sf-plugins-core": "12.2.26",
+    "@salesforce/source-deploy-retrieve": "12.37.2",
     "async": "3.2.6",
     "xml2js": "0.6.2",
     "yaml": "2.9.0"
@@ -15,7 +15,7 @@
     "@biomejs/biome": "2.5.4",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
-    "@salesforce/cli-plugins-testkit": "5.3.39",
+    "@salesforce/cli-plugins-testkit": "5.3.62",
     "@salesforce/dev-config": "4.3.3",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",
@@ -33,7 +33,7 @@
     "wireit": "0.14.13"
   },
   "engines": {
-    "node": ">=20 <=26"
+    "node": ">=22 <=26"
   },
   "files": [
     "/lib",
