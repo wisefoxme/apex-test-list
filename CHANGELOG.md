@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.11](https://github.com/wisefoxme/apex-test-list/compare/v1.13.10...v1.13.11) (2026-07-25)
+
+
+### Bug Fixes
+
+* **deps:** bump the salesforce group with 5 updates ([#378](https://github.com/wisefoxme/apex-test-list/issues/378)) ([53a0d80](https://github.com/wisefoxme/apex-test-list/commit/53a0d800920d430370682753644e4f0886f3201b))
+
 ## [1.13.10](https://github.com/wisefoxme/apex-test-list/compare/v1.13.9...v1.13.10) (2026-07-12)
 
 

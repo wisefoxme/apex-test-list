@@ -1,7 +1,7 @@
 {
   "name": "apextestlist",
   "description": "A plugin that generates a list of apex test and test suite names for use in CI/CD pipelines.",
-  "version": "1.13.10",
+  "version": "1.13.11",
   "dependencies": {
     "@oclif/core": "4.13.0",
     "@salesforce/core": "8.32.6",
