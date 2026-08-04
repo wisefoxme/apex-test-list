@@ -1,6 +1,7 @@
 'use strict';
 
 import { readdirSync, readFileSync } from 'node:fs';
+import { basename } from 'node:path';
 import { queue } from 'async';
 import { parseTestsNames } from '../parsers/testNameParser.js';
 import { parseTestSuitesNames } from '../parsers/testSuiteParser.js';
@@ -38,7 +39,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
       return true;
     }
 
-    const parts = (file.split('/').pop() as string).split('.');
+    const parts = basename(file).split('.');
     const formattedName = `${parts[1] === 'cls' ? 'ApexClass' : 'ApexTrigger'}:${parts[0]}`;
     return names.includes(formattedName);
   });
@@ -69,7 +70,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
 
     if (testClassAnnotationMatches && testClassAnnotationMatches.length > 0) {
       hasAnnotation = true;
-      testClassesNames.add(fileName.split('.').shift() as string);
+      testClassesNames.add(basename(fileName).split('.').shift() as string);
     }
 
     if (!hasAnnotation) {

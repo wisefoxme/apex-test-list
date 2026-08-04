@@ -192,3 +192,67 @@ describe('searchDirectoryForTestNamesInTestSuites wildcard guard', () => {
     }
   });
 });
+
+describe('searchDirectoryForTestClasses nested subfolder support', () => {
+  it('should match a source class in a subfolder using the ApexClass prefix', async () => {
+    const { mkdir } = await import('node:fs/promises');
+    const tempDir = await mkdtemp(join(tmpdir(), 'nested-class-'));
+    const subDir = join(tempDir, 'utils');
+    await mkdir(subDir);
+    await writeFile(join(subDir, 'DataFactory.cls'), '/** @Tests: DataFactoryTest */');
+    try {
+      const result = await searchDirectoryForTestClasses(tempDir, ['ApexClass:DataFactory']);
+      expect(result.classes).toContain('DataFactoryTest');
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should resolve an @isTest class in a subfolder to its bare class name', async () => {
+    const { mkdir } = await import('node:fs/promises');
+    const tempDir = await mkdtemp(join(tmpdir(), 'nested-istest-'));
+    const subDir = join(tempDir, 'utils');
+    await mkdir(subDir);
+    await writeFile(join(subDir, 'DataFactoryTest.cls'), '@isTest\npublic class DataFactoryTest {}');
+    try {
+      const result = await searchDirectoryForTestClasses(tempDir, null);
+      expect(result.classes).toContain('DataFactoryTest');
+      expect(result.classes).not.toContain('utils/DataFactoryTest');
+      expect(result.classes.every((c) => !c.includes('/'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should match a trigger in a subfolder using the ApexTrigger prefix', async () => {
+    const { mkdir } = await import('node:fs/promises');
+    const tempDir = await mkdtemp(join(tmpdir(), 'nested-trigger-'));
+    const subDir = join(tempDir, 'triggers');
+    await mkdir(subDir);
+    await writeFile(join(subDir, 'MyTrigger.trigger'), '// @Tests: MyTriggerTest');
+    try {
+      const result = await searchDirectoryForTestClasses(tempDir, ['ApexTrigger:MyTrigger']);
+      expect(result.classes).toContain('MyTriggerTest');
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should handle two levels of nesting correctly', async () => {
+    const { mkdir } = await import('node:fs/promises');
+    const tempDir = await mkdtemp(join(tmpdir(), 'deep-nested-'));
+    const deepDir = join(tempDir, 'a', 'b');
+    await mkdir(deepDir, { recursive: true });
+    await writeFile(join(deepDir, 'DeepClass.cls'), '/** @Tests: DeepClassTest */');
+    await writeFile(join(deepDir, 'DeepClassTest.cls'), '@isTest\npublic class DeepClassTest {}');
+    try {
+      const sourceResult = await searchDirectoryForTestClasses(tempDir, ['ApexClass:DeepClass']);
+      expect(sourceResult.classes).toContain('DeepClassTest');
+      const testResult = await searchDirectoryForTestClasses(tempDir, null);
+      expect(testResult.classes).toContain('DeepClassTest');
+      expect(testResult.classes.every((c) => !c.includes('/'))).toBe(true);
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
+});
