@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.13](https://github.com/wisefoxme/apex-test-list/compare/v1.13.12...v1.13.13) (2026-08-04)
+
+
+### Bug Fixes
+
+* use `basename()` to correctly derive Apex class names from nested subfolder paths ([#386](https://github.com/wisefoxme/apex-test-list/issues/386)) ([dbf21d4](https://github.com/wisefoxme/apex-test-list/commit/dbf21d428eb89c1946966c5bd4d5010e1eb615c7))
+
 ## [1.13.12](https://github.com/wisefoxme/apex-test-list/compare/v1.13.11...v1.13.12) (2026-08-01)
 
 
