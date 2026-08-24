@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.13.15](https://github.com/wisefoxme/apex-test-list/compare/v1.13.14...v1.13.15) (2026-08-24)
+
+
+### Bug Fixes
+
+* **deps:** bump @oclif/core in the salesforce group ([#395](https://github.com/wisefoxme/apex-test-list/issues/395)) ([9890881](https://github.com/wisefoxme/apex-test-list/commit/98908817b04725b45dabdf84b0f9e3db7c23d72f))
+
 ## [1.13.14](https://github.com/wisefoxme/apex-test-list/compare/v1.13.13...v1.13.14) (2026-08-09)
 
 
