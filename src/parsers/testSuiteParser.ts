@@ -1,6 +1,6 @@
 'use strict';
 
-import { Parser } from 'xml2js';
+import { findChildren, parseXml } from '../utils/xmlParser.js';
 
 /**
  * Analyzes the content of a test suite xml file and returns the Apex classes
@@ -10,18 +10,15 @@ import { Parser } from 'xml2js';
  * @returns a list of test classes names in the test suite
  */
 export function parseTestSuiteFile(data: string): string[] {
-  const result: string[] = [];
+  const root = parseXml(data);
 
-  new Parser().parseString(data, (error, parsed: { ApexTestSuite: { testClassName: string[] } }) => {
-    if (error) {
-      throw error;
-    }
-    parsed.ApexTestSuite.testClassName.forEach((testSuite) => {
-      result.push(testSuite);
-    });
-  });
+  if (root.name !== 'ApexTestSuite') {
+    throw new Error(`Invalid XML: expected root element "ApexTestSuite", got "${root.name}"`);
+  }
 
-  return result.sort();
+  return findChildren(root, 'testClassName')
+    .map((element) => element.text.trim())
+    .sort();
 }
 
 /**

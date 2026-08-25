@@ -2,10 +2,10 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { basename } from 'node:path';
-import { queue } from 'async';
 import { parseTestsNames } from '../parsers/testNameParser.js';
 import { parseTestSuitesNames } from '../parsers/testSuiteParser.js';
 import { getConcurrencyThreshold } from '../utils/concurrencyThreshold.js';
+import { createQueue } from '../utils/concurrentQueue.js';
 import { TEST_CLASS_ANNOTATION_REGEX, TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
 import { SearchResult } from '../utils/types.js';
 
@@ -68,6 +68,9 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
       }
     }
 
+    // Stryker disable next-line ConditionalExpression,EqualityOperator: String.match()
+    // with a global regex returns either null or a non-empty array — the length
+    // check is equivalent to a plain truthy check here.
     if (testClassAnnotationMatches && testClassAnnotationMatches.length > 0) {
       hasAnnotation = true;
       testClassesNames.add(basename(fileName).split('.').shift() as string);
@@ -78,7 +81,7 @@ export async function searchDirectoryForTestClasses(directory: string, names: st
     }
   };
 
-  const testClassNameProcessor = queue((f: string, cb: (error?: Error | undefined) => void) => {
+  const testClassNameProcessor = createQueue((f: string, cb: (error?: Error | undefined) => void) => {
     testClassNameHandler(f);
     cb();
   }, getConcurrencyThreshold());

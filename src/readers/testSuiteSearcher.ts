@@ -1,10 +1,9 @@
 'use strict';
 
 import { readdirSync, readFileSync } from 'node:fs';
-import { queue } from 'async';
-
 import { parseTestSuiteFile } from '../parsers/testSuiteParser.js';
 import { getConcurrencyThreshold } from '../utils/concurrencyThreshold.js';
+import { createQueue } from '../utils/concurrentQueue.js';
 import { matchWildcard } from '../utils/matchWildcard.js';
 import { searchDirectoryForTestClasses } from './directorySearcher.js';
 
@@ -54,7 +53,7 @@ export async function searchDirectoryForTestNamesInTestSuites(
   };
 
   // define the processors
-  const testSuiteNameProcessor = queue((f: string, cb: (error?: Error | undefined) => void) => {
+  const testSuiteNameProcessor = createQueue((f: string, cb: (error?: Error | undefined) => void) => {
     testSuiteNameHandler(f);
     cb();
   }, getConcurrencyThreshold());

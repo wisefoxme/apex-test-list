@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
-import { parse } from 'yaml';
 
 import { TestMetadataMap } from '../utils/types.js';
+import { parseYaml } from '../utils/yamlParser.js';
 
 /**
  * Verifies structure matches the test metadata map type.
@@ -20,7 +20,7 @@ function isTestMetadataMap(obj: unknown): obj is TestMetadataMap {
  */
 export async function loadTestMetadataDependencies(configPath: string): Promise<TestMetadataMap> {
   const content = await readFile(configPath, 'utf-8');
-  const parsed: unknown = parse(content);
+  const parsed: unknown = parseYaml(content);
 
   if (isTestMetadataMap(parsed)) {
     return parsed;
