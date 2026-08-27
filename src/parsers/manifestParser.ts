@@ -1,7 +1,20 @@
 'use strict';
 
 import { existsSync } from 'node:fs';
-import { ComponentSet } from '@salesforce/source-deploy-retrieve';
+import { readFile } from 'node:fs/promises';
+import { findChild, findChildren, parseXml } from '../utils/xmlParser.js';
+
+// Salesforce's metadata registry resolves type names case-insensitively;
+// manifests may declare them in any case (e.g. "apexclass"), but downstream
+// consumers compare against the canonical capitalization.
+const CANONICAL_TYPE_NAMES: Record<string, string> = {
+  apexclass: 'ApexClass',
+  apextrigger: 'ApexTrigger',
+};
+
+function canonicalTypeName(typeName: string): string {
+  return CANONICAL_TYPE_NAMES[typeName.toLowerCase()] ?? typeName;
+}
 
 /**
  * Given a certain manifest file, reads that file and returns the classes,
@@ -19,10 +32,17 @@ export async function extractTypeNamesFromManifestFile(manifestFile: string): Pr
     return result;
   }
 
-  const componentSet: ComponentSet = await ComponentSet.fromManifest({ manifestPath: manifestFile });
-  for (const component of componentSet) {
-    const typeName = component.type.name;
-    result.push(`${typeName}:${component.fullName}`);
+  const content = await readFile(manifestFile, 'utf-8');
+  const root = parseXml(content);
+
+  for (const typesElement of findChildren(root, 'types')) {
+    const nameElement = findChild(typesElement, 'name');
+    if (!nameElement) continue;
+
+    const typeName = canonicalTypeName(nameElement.text.trim());
+    for (const memberElement of findChildren(typesElement, 'members')) {
+      result.push(`${typeName}:${memberElement.text.trim()}`);
+    }
   }
 
   return result.sort((a, b) => a.localeCompare(b));

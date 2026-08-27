@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { unlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -36,6 +36,51 @@ describe('tests of the extractTypeNamesFromManifestFile fn', () => {
       result.findIndex((r) => r.startsWith('ApexTrigger')),
     );
   });
+
+  it('should skip a <types> block that has no <name>', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'manifest-no-name-'));
+    const manifestPath = join(tempDir, 'noName.xml');
+    await writeFile(
+      manifestPath,
+      `<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <types>
+    <members>Orphan</members>
+  </types>
+  <types>
+    <members>Sample</members>
+    <name>ApexClass</name>
+  </types>
+</Package>`,
+    );
+    try {
+      const result = await extractTypeNamesFromManifestFile(manifestPath);
+      expect(result).to.deep.equal(['ApexClass:Sample']);
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
+
+  it('should trim whitespace around <name> and <members> text', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'manifest-padded-'));
+    const manifestPath = join(tempDir, 'padded.xml');
+    await writeFile(
+      manifestPath,
+      `<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+  <types>
+    <members>  Sample  </members>
+    <name>  ApexClass  </name>
+  </types>
+</Package>`,
+    );
+    try {
+      const result = await extractTypeNamesFromManifestFile(manifestPath);
+      expect(result).to.deep.equal(['ApexClass:Sample']);
+    } finally {
+      await rm(tempDir, { recursive: true });
+    }
+  });
 });
 
 describe('tests of the parseTestSuiteFile fn', () => {
@@ -57,6 +102,18 @@ describe('tests of the parseTestSuiteFile fn', () => {
     } catch (e) {
       expect(e).not.toBeInstanceOf(TypeError);
     }
+  });
+
+  it('should throw when the root element is not ApexTestSuite', () => {
+    expect(() => parseTestSuiteFile('<NotApexTestSuite/>')).toThrow(
+      'expected root element "ApexTestSuite", got "NotApexTestSuite"',
+    );
+  });
+
+  it('should trim whitespace around <testClassName> text', () => {
+    const xml =
+      '<ApexTestSuite xmlns="http://soap.sforce.com/2006/04/metadata"><testClassName>  PaddedTest  </testClassName></ApexTestSuite>';
+    expect(parseTestSuiteFile(xml)).to.deep.equal(['PaddedTest']);
   });
 });
 

@@ -49,6 +49,15 @@ describe('searchDirectoryForTestClasses error handling', () => {
       'Invalid or inaccessible directory',
     );
   });
+
+  it('should preserve the original error as the cause', async () => {
+    try {
+      await searchDirectoryForTestClasses('/nonexistent/invalid/path', null);
+      expect.fail('should have thrown');
+    } catch (e) {
+      expect((e as Error).cause).toBeInstanceOf(Error);
+    }
+  });
 });
 
 describe('searchDirectoryForTestNamesInTestSuites error handling', () => {
@@ -56,6 +65,15 @@ describe('searchDirectoryForTestNamesInTestSuites error handling', () => {
     await expect(searchDirectoryForTestNamesInTestSuites('/nonexistent/invalid/path', [])).rejects.toThrow(
       'Invalid or inaccessible directory',
     );
+  });
+
+  it('should preserve the original error as the cause', async () => {
+    try {
+      await searchDirectoryForTestNamesInTestSuites('/nonexistent/invalid/path', []);
+      expect.fail('should have thrown');
+    } catch (e) {
+      expect((e as Error).cause).toBeInstanceOf(Error);
+    }
   });
 });
 
