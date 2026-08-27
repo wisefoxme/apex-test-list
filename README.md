@@ -2,11 +2,12 @@
 
 [![NPM](https://img.shields.io/npm/v/apextestlist.svg?label=apextestlist)](https://www.npmjs.com/package/apextestlist)
 [![Downloads/week](https://img.shields.io/npm/dw/apextestlist.svg)](https://npmjs.org/package/apextestlist)
+[![GitHub Marketplace](https://img.shields.io/badge/marketplace-apex--test--list-blue?logo=github)](https://github.com/marketplace/actions/apex-test-list)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-brightgreen.svg)](https://raw.githubusercontent.com/wisefoxme/apex-test-list/refs/heads/master/LICENSE)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fwisefoxme%2Fapex-test-list%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/wisefoxme/apex-test-list/master)
 ![Codecov](https://img.shields.io/codecov/c/github/wisefoxme/apex-test-list?style=flat)
 
-A plugin that generates a list of tests that your automated process should run, so you can save time by not running all tests in your Salesforce org and avoid specifying them manually.
+A plugin that generates a list of tests that your automated process should run, so you can save time by not running all tests in your Salesforce org and avoid specifying them manually. Available as a **Salesforce CLI plugin** for any provider, and as a **native GitHub Action** for GitHub Actions users who want to skip installing the CLI.
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -21,6 +22,7 @@ A plugin that generates a list of tests that your automated process should run, 
 - [Running the Tool](#running-the-tool)
   - [Handling Missing Tests](#handling-missing-tests)
   - [Handling Missing Annotations](#handling-missing-annotations)
+- [GitHub Action](#github-action)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
 - [License](#license)
@@ -159,6 +161,43 @@ To remove these warnings from the terminal, use:
 ```sh
 sf apextests list --no-warnings
 ```
+
+## GitHub Action
+
+For GitHub Actions, this is also available as a native Action — no `sf` CLI or plugin install required:
+
+```yaml
+- name: List Apex tests
+  id: list
+  uses: wisefoxme/apex-test-list@v1
+  with:
+    manifest: package.xml
+    ignore-missing-tests: 'true'
+
+- name: Deploy with the specified tests
+  run: sf project deploy start -x package.xml ${{ steps.list.outputs.command }}
+```
+
+### Inputs
+
+| Input                        | Description                                                                                                            | Required | Default |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------- | ------- |
+| `format`                      | Output format. Available options: `sf` (default), `sfdx`, or `csv`.                                                     | No       | `sf`    |
+| `manifest`                    | Path to a manifest XML file (`package.xml`). When set, only classes/triggers declared in it are considered.             | No       |         |
+| `ignore-missing-tests`         | Ignore test methods that are not found in any local package directory.                                                  | No       | `false` |
+| `ignore-package-directory`      | Directory to ignore when searching for test annotations, one per line.                                                  | No       |         |
+| `no-warnings`                  | Do not print warnings for each Apex file missing annotations.                                                           | No       | `false` |
+| `filter-by-metadata`            | Only include tests that explicitly declare metadata dependencies matching changed metadata. Requires `manifest`.        | No       | `false` |
+| `fail-on-empty`                | Fail the action if no test methods are found.                                                                           | No       | `false` |
+
+### Outputs
+
+| Output       | Description                                                                        |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `tests`       | Newline-separated list of Apex test class names.                                   |
+| `test-count`  | Number of Apex test class names found.                                             |
+| `command`     | The formatted test list, ready to append to a Salesforce CLI deploy/validate command. |
+| `warnings`    | Newline-separated list of warnings emitted while listing tests, if any.            |
 
 ## Command Reference
 

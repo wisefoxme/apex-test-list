@@ -29,6 +29,38 @@ jobs:
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
+  # Keeps dist/action/index.cjs current on every push to master, independent of
+  # whether this push is an actual release. A contributor's PR should already
+  # include a fresh bundle (enforced by test.yml's "Verify Action bundle is up
+  # to date" step), but this is the safety net: it ensures master is never
+  # stale by the time release-please's PR is merged, so the release tag always
+  # includes a correct bundle.
+  rebuild-dist:
+    name: Keep dist/action fresh
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Rebuild Action bundle
+        run: npm run build:action
+
+      - name: Commit if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: rebuild Action bundle [skip ci]"
+          file_pattern: 'dist/action/**'
+
   release-please:
     name: Release Please
     if: github.event_name == 'push'
@@ -69,6 +101,17 @@ jobs:
 
       - name: Publish to NPM
         run: NODE_AUTH_TOKEN="" npm publish --provenance --access public --tag latest
+
+      # Moves a floating major-version tag (e.g. v1) to the release commit so
+      # GitHub Action consumers can pin `uses: wisefoxme/apex-test-list@v1`
+      # instead of an exact patch version.
+      - name: Move floating major version tag
+        run: |
+          MAJOR="v$(node -p "require('./package.json').version.split('.')[0]")"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f "$MAJOR"
+          git push origin "$MAJOR" --force
 
   publish-manual:
     name: Publish Manual to NPM
