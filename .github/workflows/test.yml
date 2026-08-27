@@ -39,6 +39,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify Action bundle is up to date
+        if: runner.os == 'Linux' && matrix.node-version == '22'
+        run: |
+          npm run build:action
+          git diff --exit-code dist/action
+
       - name: Test
         run: npm run test
         env:

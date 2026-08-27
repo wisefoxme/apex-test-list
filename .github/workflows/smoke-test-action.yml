@@ -1,0 +1,176 @@
+# Manual smoke test: exercises the Action end to end on real GitHub Actions
+# infra using the repo's own samples fixtures.
+#
+# Two sources, deliberately not the same:
+# - pull_request: uses `./` (this checkout's actual action.yml/dist/action) -
+#   validates what's about to be merged before it ever reaches @v1.
+# - workflow_dispatch: uses `@v1` (the live published tag) - an on-demand
+#   check that what's actually public still works, run manually post-release.
+name: Smoke test (published Action)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/smoke-test-action.yml'
+      - 'action.yml'
+      - 'dist/action/**'
+      - 'src/action/**'
+      - 'src/core/**'
+      - 'src/parsers/**'
+      - 'src/readers/**'
+      - 'src/utils/**'
+
+permissions:
+  contents: read
+
+jobs:
+  success-path-local:
+    name: Success path (local checkout)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Write sfdx-project.json for the samples fixtures
+        run: |
+          cat > sfdx-project.json <<'EOF'
+          {
+            "packageDirectories": [{ "path": "samples", "default": true }],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "62.0"
+          }
+          EOF
+
+      - name: List Apex tests
+        id: list
+        uses: ./
+        with:
+          format: sf
+
+      - name: Show outputs
+        run: |
+          echo "test-count: ${{ steps.list.outputs.test-count }}"
+          echo "command: ${{ steps.list.outputs.command }}"
+          echo "tests:"
+          echo "${{ steps.list.outputs.tests }}"
+
+  fail-on-empty-failure-path-local:
+    name: fail-on-empty failure path (local checkout)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Write sfdx-project.json for the samples fixtures
+        run: |
+          cat > sfdx-project.json <<'EOF'
+          {
+            "packageDirectories": [{ "path": "samples", "default": true }],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "62.0"
+          }
+          EOF
+
+      - name: List Apex tests (expected to fail on an empty result)
+        id: list
+        continue-on-error: true
+        uses: ./
+        with:
+          manifest: samples/noAnnotationPackage.xml
+          fail-on-empty: 'true'
+
+      - name: Confirm the step actually failed
+        run: |
+          if [ "${{ steps.list.outcome }}" != "failure" ]; then
+            echo "Expected the fail-on-empty step to fail (outcome was '${{ steps.list.outcome }}')."
+            exit 1
+          fi
+          echo "Confirmed: fail-on-empty correctly failed the step."
+
+      - name: Confirm outputs are still set despite the failure
+        run: |
+          if [ -z "${{ steps.list.outputs.warnings }}" ]; then
+            echo "Expected warnings to still be set on a fail-on-empty failure."
+            exit 1
+          fi
+          echo "warnings: ${{ steps.list.outputs.warnings }}"
+
+  success-path-published:
+    name: Success path (published @v1)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Write sfdx-project.json for the samples fixtures
+        run: |
+          cat > sfdx-project.json <<'EOF'
+          {
+            "packageDirectories": [{ "path": "samples", "default": true }],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "62.0"
+          }
+          EOF
+
+      - name: List Apex tests
+        id: list
+        uses: wisefoxme/apex-test-list@v1
+        with:
+          format: sf
+
+      - name: Show outputs
+        run: |
+          echo "test-count: ${{ steps.list.outputs.test-count }}"
+          echo "command: ${{ steps.list.outputs.command }}"
+          echo "tests:"
+          echo "${{ steps.list.outputs.tests }}"
+
+  fail-on-empty-failure-path-published:
+    name: fail-on-empty failure path (published @v1)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Write sfdx-project.json for the samples fixtures
+        run: |
+          cat > sfdx-project.json <<'EOF'
+          {
+            "packageDirectories": [{ "path": "samples", "default": true }],
+            "namespace": "",
+            "sfdcLoginUrl": "https://login.salesforce.com",
+            "sourceApiVersion": "62.0"
+          }
+          EOF
+
+      - name: List Apex tests (expected to fail on an empty result)
+        id: list
+        continue-on-error: true
+        uses: wisefoxme/apex-test-list@v1
+        with:
+          manifest: samples/noAnnotationPackage.xml
+          fail-on-empty: 'true'
+
+      - name: Confirm the step actually failed
+        run: |
+          if [ "${{ steps.list.outcome }}" != "failure" ]; then
+            echo "Expected the fail-on-empty step to fail (outcome was '${{ steps.list.outcome }}')."
+            exit 1
+          fi
+          echo "Confirmed: fail-on-empty correctly failed the step."
+
+      - name: Confirm outputs are still set despite the failure
+        run: |
+          if [ -z "${{ steps.list.outputs.warnings }}" ]; then
+            echo "Expected warnings to still be set on a fail-on-empty failure."
+            exit 1
+          fi
+          echo "warnings: ${{ steps.list.outputs.warnings }}"

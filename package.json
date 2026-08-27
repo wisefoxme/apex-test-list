@@ -8,6 +8,7 @@
     "@salesforce/sf-plugins-core": "12.2.28"
   },
   "devDependencies": {
+    "@actions/core": "3.0.1",
     "@biomejs/biome": "2.5.9",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
@@ -17,6 +18,7 @@
     "@stryker-mutator/vitest-runner": "9.6.1",
     "@types/node": "22.20.1",
     "@vitest/coverage-v8": "4.1.11",
+    "esbuild": "0.28.2",
     "husky": "9.1.7",
     "lint-staged": "17.3.0",
     "oclif": "4.23.30",
@@ -31,6 +33,7 @@
   },
   "files": [
     "/lib",
+    "!/lib/action",
     "/messages",
     "/oclif.manifest.json",
     "/oclif.lock",
@@ -62,6 +65,7 @@
   },
   "scripts": {
     "build": "wireit",
+    "build:action": "wireit",
     "clean": "wireit",
     "clean:build": "wireit",
     "clean:package-manager": "wireit",
@@ -85,8 +89,24 @@
     "build": {
       "dependencies": [
         "compile",
-        "lint"
+        "lint",
+        "build:action"
       ]
+    },
+    "build:action": {
+      "command": "esbuild src/action/index.ts --bundle --minify --platform=node --format=cjs --target=node22 --outfile=dist/action/index.cjs",
+      "files": [
+        "src/action/**/*.ts",
+        "src/core/**/*.ts",
+        "src/parsers/**/*.ts",
+        "src/readers/**/*.ts",
+        "src/utils/**/*.ts",
+        "tsconfig.json"
+      ],
+      "output": [
+        "dist/action/**"
+      ],
+      "clean": false
     },
     "clean": {
       "command": "shx rm -rf 'reports/*' oclif.manifest.json oclif.lock 'stderr*.txt' 'stdout*.txt' '.stryker-tmp/*'",

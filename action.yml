@@ -1,0 +1,56 @@
+name: 'Apex Test List'
+description: 'List Apex tests and test suites to run in a Salesforce CI/CD pipeline.'
+author: 'Renato Oliveira'
+branding:
+  icon: 'check-circle'
+  color: 'green'
+
+inputs:
+  format:
+    description: >-
+      Format of the output. Available options: `sf` (default, CLI-friendly `--tests` list),
+      `sfdx` (space-separated `--tests` list), or `csv` (comma-separated values).
+    required: false
+    default: 'sf'
+  manifest:
+    description: >-
+      Path to a manifest XML file (package.xml). When set, test selection is limited to the
+      classes/triggers declared in the manifest instead of scanning all package directories.
+    required: false
+  ignore-missing-tests:
+    description: 'Ignore test methods that are not found in any local package directory.'
+    required: false
+    default: 'false'
+  ignore-package-directory:
+    description: >-
+      Directory to ignore when searching for test annotations, one per line. Should match how
+      it's declared in "sfdx-project.json".
+    required: false
+  no-warnings:
+    description: 'Do not print warnings for each Apex file missing annotations.'
+    required: false
+    default: 'false'
+  filter-by-metadata:
+    description: >-
+      Only include tests that explicitly declare metadata dependencies matching changed
+      metadata. Requires `manifest` to also be set.
+    required: false
+    default: 'false'
+  fail-on-empty:
+    description: 'Fail the action if no test methods are found.'
+    required: false
+    default: 'false'
+
+outputs:
+  tests:
+    description: 'Newline-separated list of Apex test class names.'
+  test-count:
+    description: 'Number of Apex test class names found.'
+  command:
+    description: 'The formatted test list, ready to append to a Salesforce CLI deploy/validate command.'
+  warnings:
+    description: 'Newline-separated list of warnings emitted while listing tests, if any.'
+
+runs:
+  using: 'node24'
+  main: 'dist/action/index.cjs'
