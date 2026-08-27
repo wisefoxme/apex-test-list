@@ -138,6 +138,21 @@ describe('GitHub Action entrypoint', () => {
     expect(core.setFailed).not.toHaveBeenCalled();
   });
 
+  it('reads ignore-missing-tests, no-warnings, and filter-by-metadata by their exact input names', async () => {
+    stubInputs({}, {}, { 'ignore-missing-tests': true, 'no-warnings': true, 'filter-by-metadata': true });
+    listTestsMock.mockResolvedValue(baseResult);
+
+    await run();
+
+    expect(listTestsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ignoreMissingTests: true,
+        noWarnings: true,
+        filterByMetadata: true,
+      }),
+    );
+  });
+
   it('fails the action with the error message when listTests throws', async () => {
     stubInputs({});
     listTestsMock.mockRejectedValue(new Error('boom'));
