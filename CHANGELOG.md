@@ -5,6 +5,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.0](https://github.com/wisefoxme/apex-test-list/compare/v1.13.15...v1.14.0) (2026-08-27)
+
+
+### Features
+
+* add GitHub Action for listing Apex tests ([#399](https://github.com/wisefoxme/apex-test-list/issues/399)) ([baca2f5](https://github.com/wisefoxme/apex-test-list/commit/baca2f5e51f26a502bf6efa23322a2fe96bde966))
+* replace async, xml2js, yaml, and SDR with in-house parsers ([#398](https://github.com/wisefoxme/apex-test-list/issues/398)) ([001a6c6](https://github.com/wisefoxme/apex-test-list/commit/001a6c6f9f6625d28f1dac5774145fb6b0080292))
+
 ## [1.13.15](https://github.com/wisefoxme/apex-test-list/compare/v1.13.14...v1.13.15) (2026-08-24)
 
 
