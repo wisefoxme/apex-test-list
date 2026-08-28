@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.14.1](https://github.com/wisefoxme/apex-test-list/compare/v1.14.0...v1.14.1) (2026-08-28)
+
+
+### Bug Fixes
+
+* handle YAML comments in yamlParser (regression from 1.14.0) ([#402](https://github.com/wisefoxme/apex-test-list/issues/402)) ([05b91b1](https://github.com/wisefoxme/apex-test-list/commit/05b91b1ca3749f9989fa9e1e7c6ebf36b9f5886c))
+
 ## [1.14.0](https://github.com/wisefoxme/apex-test-list/compare/v1.13.15...v1.14.0) (2026-08-27)
 
 
