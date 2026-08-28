@@ -29,6 +29,24 @@ function parseScalar(raw: string): unknown {
 const TOP_LEVEL_KEY_REGEX = /^(\S[^:]*):\s*(.*)/;
 const LIST_ITEM_REGEX = /^[ \t]+-\s?(.*)/;
 
+/**
+ * Strip a YAML line comment (` #` through end-of-string) from a raw value
+ * fragment, but do not truncate a `#` that appears inside a quoted string.
+ */
+function stripInlineComment(raw: string): string {
+  // If the value is a quoted string, leave it untouched.
+  const trimmed = raw.trim();
+  if (
+    trimmed.length >= 2 &&
+    ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'")))
+  ) {
+    return raw;
+  }
+  // Remove ` #...` (space + hash) or a leading `#` (whole value is a comment).
+  const commentIdx = raw.search(/(^|\s)#/);
+  return commentIdx === -1 ? raw : raw.slice(0, commentIdx).trimEnd();
+}
+
 export function parseYaml(content: string): unknown {
   const lines = content.replace(/\r\n/g, '\n').split('\n');
   const result: Record<string, unknown> = {};
@@ -49,13 +67,23 @@ export function parseYaml(content: string): unknown {
   // is already skipped by the "not a key, not a list item" fallthrough below
   // — no separate blank-line check needed.
   for (const rawLine of lines) {
+    // Skip comment-only lines (first non-whitespace character is `#`).
+    if (/^\s*#/.test(rawLine)) {
+      continue;
+    }
+
+    // Skip YAML document markers.
+    if (/^---/.test(rawLine)) {
+      continue;
+    }
+
     const listMatch = LIST_ITEM_REGEX.exec(rawLine);
     // Stryker disable next-line ConditionalExpression: commitPending() always
     // resets currentList before a new key can pick it up, so a list item seen
     // while currentKey is null can never leak into the result either way.
     if (listMatch && currentKey !== null) {
       currentList = currentList ?? [];
-      currentList.push(parseScalar(listMatch[1]));
+      currentList.push(parseScalar(stripInlineComment(listMatch[1])));
       continue;
     }
 
@@ -71,11 +99,11 @@ export function parseYaml(content: string): unknown {
     commitPending();
     sawKey = true;
     const key = keyMatch[1].trim();
-    const inline = keyMatch[2];
+    const inline = stripInlineComment(keyMatch[2]);
 
     // TOP_LEVEL_KEY_REGEX's `\s*` already consumes any whitespace right after
     // the colon, so `inline` can never be non-empty and whitespace-only.
-    if (inline) {
+    if (inline.trim()) {
       result[key] = parseScalar(inline);
     } else {
       currentKey = key;

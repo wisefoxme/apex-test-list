@@ -388,4 +388,40 @@ describe('parseYaml', () => {
       Foo: ['Bar', 'Baz'],
     });
   });
+
+  it('skips a top-level comment line that contains a colon', () => {
+    expect(parseYaml('# threshold: 0.65\nMyTest:\n  - ApexClass:MyClass\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
+
+  it('skips a top-level comment line without a colon', () => {
+    expect(parseYaml('# just a note\nMyTest:\n  - ApexClass:MyClass\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
+
+  it('strips an inline comment after a key', () => {
+    expect(parseYaml('MyTest: # note\n  - ApexClass:MyClass\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
+
+  it('strips an inline comment after a list item', () => {
+    expect(parseYaml('MyTest:\n  - ApexClass:MyClass # note\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
+
+  it('skips an indented comment inside a block sequence', () => {
+    expect(parseYaml('MyTest:\n  # internal comment\n  - ApexClass:MyClass\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
+
+  it('ignores a leading document marker', () => {
+    expect(parseYaml('---\nMyTest:\n  - ApexClass:MyClass\n')).toEqual({
+      MyTest: ['ApexClass:MyClass'],
+    });
+  });
 });
