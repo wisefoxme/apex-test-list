@@ -26,9 +26,6 @@ updates:
       prefix: fix(deps)
       # no release for dev-deps
       prefix-development: chore(dev-deps)
-    ignore:
-      - dependency-name: '*'
-        update-types: ['version-update:semver-major']
     groups:
       dependencies:
         dependency-type: 'production'
