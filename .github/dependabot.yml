@@ -27,19 +27,10 @@ updates:
       # no release for dev-deps
       prefix-development: chore(dev-deps)
     ignore:
-      - dependency-name: '@salesforce/dev-scripts'
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
     groups:
-      stryker:
-        patterns:
-          - '@stryker-mutator/*'
-      vitest:
-        patterns:
-          - 'vitest'
-          - '@vitest/*'
-      salesforce:
-        patterns:
-          - '@salesforce/*'
-          - '@oclif/*'
-          - 'oclif'
+      dependencies:
+        dependency-type: 'production'
+      dev-dependencies:
+        dependency-type: 'development'
