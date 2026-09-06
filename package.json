@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@actions/core": "3.0.1",
-    "@biomejs/biome": "2.5.10",
+    "@biomejs/biome": "2.5.12",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@salesforce/cli-plugins-testkit": "5.3.66",
@@ -20,7 +20,7 @@
     "@vitest/coverage-v8": "4.1.11",
     "esbuild": "0.28.2",
     "husky": "9.1.7",
-    "lint-staged": "17.3.0",
+    "lint-staged": "17.4.1",
     "oclif": "4.24.0",
     "shx": "0.4.0",
     "ts-node": "10.9.2",
