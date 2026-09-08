@@ -269,5 +269,8 @@
   },
   "exports": "./lib/index.js",
   "type": "module",
-  "author": "Renato Oliveira"
+  "author": "Renato Oliveira",
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
 }
