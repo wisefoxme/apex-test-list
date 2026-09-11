@@ -20,7 +20,9 @@
     "@vitest/coverage-v8": "5.0.0",
     "esbuild": "0.28.2",
     "husky": "9.1.7",
+    "knip": "6.35.1",
     "lint-staged": "17.4.1",
+    "ls-engines": "0.10.1",
     "oclif": "5.0.0",
     "shx": "0.4.0",
     "typescript": "7.0.2",
@@ -28,7 +30,7 @@
     "wireit": "0.14.13"
   },
   "engines": {
-    "node": ">=22 <=26"
+    "node": ">=22.19.0 <=26"
   },
   "files": [
     "/lib",
@@ -72,6 +74,8 @@
     "format": "wireit",
     "link-check": "wireit",
     "lint": "wireit",
+    "lint:dependencies": "wireit",
+    "lint:engine": "wireit",
     "postpack": "shx rm -f oclif.manifest.json oclif.lock",
     "prepack": "wireit",
     "prepare": "husky",
@@ -165,6 +169,27 @@
         "messages/**",
         "biome.json",
         "**/tsconfig.json"
+      ],
+      "output": []
+    },
+    "lint:dependencies": {
+      "command": "knip",
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "knip.config.ts",
+        "package.json"
+      ],
+      "output": [],
+      "dependencies": [
+        "lint"
+      ]
+    },
+    "lint:engine": {
+      "command": "ls-engines --no-current --no-dev --mode=virtual",
+      "files": [
+        "package.json",
+        "package-lock.json"
       ],
       "output": []
     },
