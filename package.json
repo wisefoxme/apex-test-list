@@ -4,7 +4,7 @@
   "version": "1.14.3",
   "dependencies": {
     "@oclif/core": "5.0.0",
-    "@salesforce/core": "9.1.9",
+    "@salesforce/core": "9.1.11",
     "@salesforce/sf-plugins-core": "13.0.4"
   },
   "devDependencies": {
