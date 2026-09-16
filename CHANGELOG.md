@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.0](https://github.com/wisefoxme/apex-test-list/compare/v1.14.4...v1.15.0) (2026-09-16)
+
+
+### Features
+
+* add manifest-aware --fail-on-empty flag ([#420](https://github.com/wisefoxme/apex-test-list/issues/420)) ([8fef2b5](https://github.com/wisefoxme/apex-test-list/commit/8fef2b54d169e4b474a340ea97b44642c9bd6815))
+
 ## [1.14.4](https://github.com/wisefoxme/apex-test-list/compare/v1.14.3...v1.14.4) (2026-09-13)
 
 
