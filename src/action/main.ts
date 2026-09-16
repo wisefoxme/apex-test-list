@@ -14,6 +14,7 @@ export async function run(): Promise<void> {
   try {
     const format = core.getInput('format') || 'sf';
     const manifestInput = core.getInput('manifest');
+    const manifest = manifestInput === '' ? undefined : manifestInput;
     const ignoreMissingTests = core.getBooleanInput('ignore-missing-tests');
     const ignoreDirs = multilineInput('ignore-package-directory');
     const noWarnings = core.getBooleanInput('no-warnings');
@@ -23,7 +24,7 @@ export async function run(): Promise<void> {
 
     const result = await listTests({
       format,
-      manifest: manifestInput === '' ? undefined : manifestInput,
+      manifest,
       ignoreMissingTests,
       ignoreDirs,
       noWarnings,
@@ -42,7 +43,7 @@ export async function run(): Promise<void> {
       core.info(result.command);
     }
 
-    if (failOnEmpty && result.tests.length === 0) {
+    if (failOnEmpty && result.tests.length === 0 && (!manifest || result.manifestHasApex)) {
       core.setFailed('No test methods found.');
     }
   } catch (error) {

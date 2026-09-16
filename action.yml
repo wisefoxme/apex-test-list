@@ -37,7 +37,10 @@ inputs:
     required: false
     default: 'false'
   fail-on-empty:
-    description: 'Fail the action if no test methods are found.'
+    description: >-
+      Fail the action if no test methods are found. When `manifest` is also set, this is
+      manifest-aware: the action still succeeds if the manifest has no ApexClass/ApexTrigger
+      members, and only fails when the manifest declares Apex but no tests were found for it.
     required: false
     default: 'false'
 

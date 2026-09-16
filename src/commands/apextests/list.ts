@@ -1,6 +1,6 @@
 'use strict';
 
-import { Messages } from '@salesforce/core';
+import { Messages, SfError } from '@salesforce/core';
 import { Flags, SfCommand } from '@salesforce/sf-plugins-core';
 
 import { listTests } from '../../core/listTests.js';
@@ -56,6 +56,13 @@ export default class ApextestsList extends SfCommand<ApextestsListResult> {
       required: false,
       default: false,
     }),
+    'fail-on-empty': Flags.boolean({
+      summary: messages.getMessage('flags.fail-on-empty.summary'),
+      description: messages.getMessage('flags.fail-on-empty.description'),
+      char: 'e',
+      required: false,
+      default: false,
+    }),
   };
 
   public async run(): Promise<ApextestsListResult> {
@@ -70,6 +77,10 @@ export default class ApextestsList extends SfCommand<ApextestsListResult> {
       filterByMetadata: flags['filter-by-metadata'],
       warn: this.warn.bind(this),
     });
+
+    if (flags['fail-on-empty'] && result.tests.length === 0 && (!flags.manifest || result.manifestHasApex)) {
+      throw new SfError(messages.getMessage('errors.noTestsFound'));
+    }
 
     this.log(result.command);
     return result;

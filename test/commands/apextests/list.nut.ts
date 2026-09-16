@@ -122,4 +122,20 @@ describe('apextests list NUTs', () => {
         .join(','),
     );
   });
+
+  it('--fail-on-empty exits 0 when the manifest has no Apex members', () => {
+    const command = `apextests list --fail-on-empty --manifest ${path.join('samples', 'samplePackageNoTypes.xml')} -d ${ignoreDir}`;
+    execCmd(command, { ensureExitCode: 0 });
+  });
+
+  it('--fail-on-empty exits 1 when the manifest has Apex but no tests are found', () => {
+    const command = `apextests list --fail-on-empty --manifest ${path.join('samples', 'noAnnotationPackage.xml')} -d ${ignoreDir}`;
+    const output = execCmd(command, { ensureExitCode: 1 }).shellOutput.stderr;
+    expect(output).to.include('No test methods found.');
+  });
+
+  it('--fail-on-empty exits 1 when no manifest is given and no tests are found', () => {
+    const command = 'apextests list --fail-on-empty --ignore-package-directory samples';
+    execCmd(command, { ensureExitCode: 1 });
+  });
 });
