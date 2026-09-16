@@ -13,6 +13,7 @@ export type SearchResult = {
 export type ApextestsListResult = {
   tests: string[];
   command: string;
+  manifestHasApex: boolean;
 };
 
 export type ListTestsOptions = {

@@ -54,6 +54,18 @@ Only include tests that explicitly declare metadata dependencies matching change
 
 When enabled with `manifest`, test selection is based on metadata changes (e.g., Flow, CustomObject) rather than Apex annotations.
 
+# flags.fail-on-empty.summary
+
+Fail with exit code 1 if no test methods are found.
+
+# flags.fail-on-empty.description
+
+If provided, the command exits with code 1 when no test methods are found. When combined with `--manifest`, the command still exits with code 0 if the manifest contains no `ApexClass` or `ApexTrigger` members, since there is nothing to test in that case.
+
+# errors.noTestsFound
+
+No test methods found.
+
 # examples
 
 - <%= config.bin %> <%= command.id %> --format csv
@@ -61,3 +73,4 @@ When enabled with `manifest`, test selection is based on metadata changes (e.g.,
 - <%= config.bin %> <%= command.id %> --format sf --manifest package.xml
 - <%= config.bin %> <%= command.id %> --format sf --manifest package.xml --ignore-missing-tests
 - <%= config.bin %> <%= command.id %> --format sf --manifest package.xml -d "force-app"
+- <%= config.bin %> <%= command.id %> --format sf --manifest package.xml --fail-on-empty

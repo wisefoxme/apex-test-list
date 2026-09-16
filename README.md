@@ -22,6 +22,7 @@ A plugin that generates a list of tests that your automated process should run, 
 - [Running the Tool](#running-the-tool)
   - [Handling Missing Tests](#handling-missing-tests)
   - [Handling Missing Annotations](#handling-missing-annotations)
+  - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
 - [GitHub Action](#github-action)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
@@ -162,6 +163,28 @@ To remove these warnings from the terminal, use:
 sf apextests list --no-warnings
 ```
 
+### Failing When No Tests Are Found
+
+By default, the command exits with code `0` even when no test methods are found — it just prints an empty result and a warning. To have it fail the run instead, use:
+
+```sh
+sf apextests list --fail-on-empty
+```
+
+Combined with `-x`/`--manifest`, this is manifest-aware: it only fails when the manifest actually declares `ApexClass`/`ApexTrigger` members but no tests could be resolved for them. If the manifest contains no Apex at all (e.g., a delta package with only non-Apex metadata), the command still exits `0`, since there's nothing to test.
+
+```sh
+# Exits 0: package.xml has no ApexClass/ApexTrigger members, nothing to check
+sf apextests list --manifest package.xml --fail-on-empty
+
+# Exits 1: package.xml declares Apex, but no tests were found for it
+sf apextests list --manifest package.xml --fail-on-empty
+```
+
+This is useful as a CI guardrail: skip the deploy/validate step cleanly when a manifest has no Apex changes, but fail loudly when Apex changed and no tests cover it.
+
+The GitHub Action's `fail-on-empty` input behaves the same way — see [Inputs](#inputs).
+
 ## GitHub Action
 
 For GitHub Actions, this is also available as a native Action — no `sf` CLI or plugin install required:
@@ -188,7 +211,7 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
 | `ignore-package-directory`      | Directory to ignore when searching for test annotations, one per line.                                                  | No       |         |
 | `no-warnings`                  | Do not print warnings for each Apex file missing annotations.                                                           | No       | `false` |
 | `filter-by-metadata`            | Only include tests that explicitly declare metadata dependencies matching changed metadata. Requires `manifest`.        | No       | `false` |
-| `fail-on-empty`                | Fail the action if no test methods are found.                                                                           | No       | `false` |
+| `fail-on-empty`                | Fail the action if no test methods are found. Manifest-aware when `manifest` is set — see [Failing When No Tests Are Found](#failing-when-no-tests-are-found). | No       | `false` |
 
 ### Outputs
 
@@ -203,7 +226,7 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
 
 ```
 USAGE
-  $ sf apextests list -f <value> -x <value> -s -n -d <value> -m [--json]
+  $ sf apextests list -f <value> -x <value> -s -n -d <value> -m -e [--json]
 
 FLAGS
   -f, --format=<value>            Output format. Available options:
@@ -216,7 +239,7 @@ FLAGS
                                   Should match how they are declared in "sfdx-project.json".
                                   Can be declared multiple times.
   -m, --filter-by-metadata        [default: false] When enabled with `manifest`, test selection is based on metadata changes (e.g., Flow, CustomObject) rather than Apex annotations.
-
+  -e, --fail-on-empty             [default: false] Exit with code 1 if no test methods are found. With `--manifest`, exits 0 instead when the manifest has no ApexClass/ApexTrigger members.
 
 GLOBAL FLAGS
   --json  Format output as JSON.
@@ -241,6 +264,10 @@ EXAMPLES
   Exclude annotations found in the "force-app" directory:
 
     $ sf apextests list -d "force-app"
+
+  Fail with exit code 1 if a manifest declares Apex but no tests are found for it (exit 0 if the manifest has no Apex at all):
+
+    $ sf apextests list --format sf --manifest package.xml --fail-on-empty
 
   List test annotations without printing warnings for each file missing annotations:
 

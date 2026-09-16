@@ -24,11 +24,13 @@ export async function listTests({
   const testSuitesNames: string[] = [];
   const allTestClasses: string[] = [];
   const warnings: string[] = [];
+  let manifestHasApex = false;
 
   const { metadataPaths: packageDirectories, repoRoot } = await getPackageDirectories(ignoreDirs);
 
   if (manifest) {
     const manifestMetadata = await extractTypeNamesFromManifestFile(manifest);
+    manifestHasApex = manifestMetadata.some((name) => name.startsWith('ApexClass:') || name.startsWith('ApexTrigger:'));
     testClassesNames = manifestMetadata.filter((name) => !name.endsWith('testSuite-meta.xml'));
     if (filterByMetadata) {
       const ymlConfigPath = resolve(repoRoot, METADATA_FILTER_CONFIG);
@@ -76,8 +78,9 @@ export async function listTests({
     return {
       tests: [],
       command: '',
+      manifestHasApex,
     };
   }
 
-  return formatList(format, finalTestMethods);
+  return formatList(format, finalTestMethods, manifestHasApex);
 }

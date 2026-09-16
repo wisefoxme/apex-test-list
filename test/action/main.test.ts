@@ -25,6 +25,7 @@ function stubInputs(
 const baseResult = {
   tests: ['SampleTest', 'SuperSampleTest'],
   command: '--tests SampleTest --tests SuperSampleTest',
+  manifestHasApex: false,
 };
 
 describe('GitHub Action entrypoint', () => {
@@ -102,7 +103,7 @@ describe('GitHub Action entrypoint', () => {
 
   it('does not log a command when no tests are found', async () => {
     stubInputs({});
-    listTestsMock.mockResolvedValue({ tests: [], command: '' });
+    listTestsMock.mockResolvedValue({ tests: [], command: '', manifestHasApex: false });
 
     await run();
 
@@ -111,9 +112,9 @@ describe('GitHub Action entrypoint', () => {
     expect(core.info).not.toHaveBeenCalled();
   });
 
-  it('fails the action when fail-on-empty is true and no tests are found', async () => {
+  it('fails the action when fail-on-empty is true, no manifest is given, and no tests are found', async () => {
     stubInputs({}, {}, { 'fail-on-empty': true });
-    listTestsMock.mockResolvedValue({ tests: [], command: '' });
+    listTestsMock.mockResolvedValue({ tests: [], command: '', manifestHasApex: false });
 
     await run();
 
@@ -122,7 +123,7 @@ describe('GitHub Action entrypoint', () => {
 
   it('does not fail when fail-on-empty is false even if no tests are found', async () => {
     stubInputs({}, {}, { 'fail-on-empty': false });
-    listTestsMock.mockResolvedValue({ tests: [], command: '' });
+    listTestsMock.mockResolvedValue({ tests: [], command: '', manifestHasApex: false });
 
     await run();
 
@@ -136,6 +137,24 @@ describe('GitHub Action entrypoint', () => {
     await run();
 
     expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('does not fail when fail-on-empty is true, a manifest is given, and the manifest has no Apex', async () => {
+    stubInputs({ manifest: 'package.xml' }, {}, { 'fail-on-empty': true });
+    listTestsMock.mockResolvedValue({ tests: [], command: '', manifestHasApex: false });
+
+    await run();
+
+    expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
+  it('fails when fail-on-empty is true, a manifest is given, and the manifest has Apex but no tests', async () => {
+    stubInputs({ manifest: 'package.xml' }, {}, { 'fail-on-empty': true });
+    listTestsMock.mockResolvedValue({ tests: [], command: '', manifestHasApex: true });
+
+    await run();
+
+    expect(core.setFailed).toHaveBeenCalledWith('No test methods found.');
   });
 
   it('reads ignore-missing-tests, no-warnings, and filter-by-metadata by their exact input names', async () => {

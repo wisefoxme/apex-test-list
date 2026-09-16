@@ -140,9 +140,33 @@ describe('apextests list', () => {
     });
     expect(result.command).to.equal('');
     expect(result.tests).toEqual([]);
+    expect(result.manifestHasApex).to.equal(true);
     expect(warnings.join('\n')).to.include(
       'File "NoAnnotations.cls" does not contain @tests, @testsuites, or @istest annotations',
     );
+  });
+
+  it('runs list --manifest samples/samplePackageNoTypes.xml', async () => {
+    const result = await listTests({
+      manifest: 'samples/samplePackageNoTypes.xml',
+      ignoreDirs: [ignoreDir],
+    });
+    expect(result.command).to.equal('');
+    expect(result.tests).toEqual([]);
+    expect(result.manifestHasApex).to.equal(false);
+  });
+
+  it('runs list --manifest samples/samplePackage.xml reports manifestHasApex', async () => {
+    const result = await listTests({
+      manifest: 'samples/samplePackage.xml',
+      ignoreDirs: [ignoreDir],
+    });
+    expect(result.manifestHasApex).to.equal(true);
+  });
+
+  it('runs list without a manifest reports manifestHasApex as false', async () => {
+    const result = await listTests({ ignoreDirs: [ignoreDir] });
+    expect(result.manifestHasApex).to.equal(false);
   });
 
   it('runs list --manifest samples/noAnnotationPackage.xml --no-warnings', async () => {
