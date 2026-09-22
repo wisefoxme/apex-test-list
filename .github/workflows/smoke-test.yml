@@ -33,6 +33,7 @@ jobs:
       - name: Install Salesforce CLI and plugin
         shell: bash
         run: |
+          npm install --global @salesforce/cli
           PLUGIN_VERSION=$(node -p "require('./package.json').version")
           echo 'y' | sf plugins install --force apextestlist@${PLUGIN_VERSION}
           sf version --verbose --json
