@@ -20,6 +20,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [3. `@isTest` (Apex Annotation)](#3-istest-apex-annotation)
   - [4. `.test-dependencies.yml` (Centralized Metadata Filter)](#4-test-dependenciesyml-centralized-metadata-filter)
 - [Running the Tool](#running-the-tool)
+  - [Explicit Test Level for Deploy and Validate](#explicit-test-level-for-deploy-and-validate)
   - [Handling Missing Tests](#handling-missing-tests)
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
@@ -124,13 +125,29 @@ Example output:
 This command is useful in CI/CD pipelines, dynamically generating the test list for deployments:
 
 ```sh
-sf project deploy start $(sf apextests list)
+sf project deploy start --test-level RunSpecifiedTests $(sf apextests list)
 ```
 
 The final deployment command would look like:
 
 ```sh
-sf project deploy start --tests SampleTest SuperSampleTest Sample2Test SuperSample2Test SampleTriggerTest
+sf project deploy start --test-level RunSpecifiedTests --tests SampleTest SuperSampleTest Sample2Test SuperSample2Test SampleTriggerTest
+```
+
+### Explicit Test Level for Deploy and Validate
+
+When you append `sf apextests list` output (or the GitHub Action `command` output) to `sf project deploy start` or `sf project deploy validate`, explicitly pass `--test-level RunSpecifiedTests`. Without it, the deploy or validation can fail immediately with:
+
+```text
+Error (1): INVALID_OPERATION: runTests can only be used with a testLevel of RunSpecifiedTests
+```
+
+Salesforce CLI documentation suggests that providing `--tests` should infer `RunSpecifiedTests`, but behavior differs between deploy subcommands. In practice, `sf project deploy validate` does not set the level implicitly (a fix is tracked in [salesforcecli/plugin-deploy-retrieve#1650](https://github.com/salesforcecli/plugin-deploy-retrieve/pull/1650)). Using an explicit test level works for both start and validate.
+
+With a manifest:
+
+```sh
+sf project deploy start -x package/package.xml --test-level RunSpecifiedTests $(sf apextests list -x package/package.xml)
 ```
 
 If no test methods are found, the command output will be empty and will present this warning:
@@ -198,7 +215,7 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
     ignore-missing-tests: 'true'
 
 - name: Deploy with the specified tests
-  run: sf project deploy start -x package.xml ${{ steps.list.outputs.command }}
+  run: sf project deploy start -x package.xml --test-level RunSpecifiedTests ${{ steps.list.outputs.command }}
 ```
 
 ### Inputs
