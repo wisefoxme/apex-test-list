@@ -178,5 +178,6 @@ jobs:
   smoke-test:
     name: Smoke Test
     needs: [wait-for-npm]
+    if: ${{ !cancelled() && needs.wait-for-npm.result == 'success' }}
     uses: ./.github/workflows/smoke-test.yml
     secrets: inherit
