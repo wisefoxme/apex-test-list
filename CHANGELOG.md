@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.15.2](https://github.com/wisefoxme/apex-test-list/compare/v1.15.1...v1.15.2) (2026-10-11)
+
+
+### Bug Fixes
+
+* **deps:** bump the dependencies group across 1 directory with 3 updates ([#431](https://github.com/wisefoxme/apex-test-list/issues/431)) ([4c7be64](https://github.com/wisefoxme/apex-test-list/commit/4c7be64a38446d8e8391fcaab1b7b50a184c28d7))
+
 ## [1.15.1](https://github.com/wisefoxme/apex-test-list/compare/v1.15.0...v1.15.1) (2026-09-28)
 
 
