@@ -13,6 +13,7 @@ A plugin that generates a list of tests that your automated process should run, 
 <details>
   <summary>Table of Contents</summary>
 
+- [Why Explicit Test Selection?](#why-explicit-test-selection)
 - [Install](#install)
 - [Usage](#usage)
   - [1. `@Tests:` (Custom Comment Annotation)](#1-tests-custom-comment-annotation)
@@ -30,6 +31,21 @@ A plugin that generates a list of tests that your automated process should run, 
 - [Issues](#issues)
 - [License](#license)
 </details>
+
+## Why Explicit Test Selection?
+
+Salesforce's `RunRelevantTests` test level (beta since Spring '26) also runs only some tests, but the org chooses them on the server by analyzing the deployment. Salesforce doesn't document how that analysis works, and the deploy result is the first place you see which tests it picked. apex-test-list instead makes the selection explicit and keeps it in your repository:
+
+|                              | apex-test-list (`RunSpecifiedTests`)                                                | `RunRelevantTests`                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Who picks the tests          | You, through `@Tests:` / `@TestSuites:` comments or `.test-dependencies.yml`        | The org, from an undocumented analysis of the deployment                         |
+| Know the list before deploying | Yes: `sf apextests list` prints it locally, in CI, or in a pull request           | No: it shows up in the deploy result (for example `sf project deploy start --json`) |
+| Review changes to the selection | Yes, mappings are source lines reviewed and versioned like any other change     | No; you can only influence it with `@IsTest(testFor=...)` and `@IsTest(critical=true)` on test classes |
+| Reproducible                 | Same files and manifest give the same list every time                               | Depends on the org's analysis, which may change between releases                 |
+| Indirect dependencies        | Mapped deliberately (for example, a handler's tests on its trigger)                 | Community testing found it can miss indirect and dynamically created classes     |
+| Availability                 | Any org and API version that supports `RunSpecifiedTests`                           | Beta; requires a Spring '26 org                                                  |
+
+Both still require 75% coverage for each Apex class and trigger in the deployment. The cost of explicit selection is writing and maintaining the mappings. The [Claude Code plugin](#claude-code-plugin) writes them from your org's code coverage or your test code, and audits them as the code changes.
 
 ## Install
 
