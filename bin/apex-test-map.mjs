@@ -38,9 +38,15 @@ apply options:
                                    class and a trigger share a name.
   --dry-run                        Show changes without writing files
   --allow-unknown                  Allow test names that are not local @isTest classes
+  --header-template <file>         Comment header to follow. Names go into an existing
+                                   header; files without one get the template, with
+                                   {{name}}, {{kind}}, {{tests}}, {{suites}} filled in.
+                                   Existing headers are never rewritten.
 
 audit options:
   --max-tests <n>                  Flag annotations with more than n tests (default 10)
+  --header-template <file>         Flag annotated files whose annotations are not in a
+                                   leading header of the template's comment style
 `;
 
 const SKIP_DIRS = new Set(['node_modules', '.git', '.sfdx', '.sf', '.husky']);
@@ -94,6 +100,9 @@ function parseArgs(argv) {
         break;
       case '--missing-only':
         opts.missingOnly = true;
+        break;
+      case '--header-template':
+        opts.headerTemplate = next();
         break;
       case '--dry-run':
         opts.dryRun = true;
@@ -422,7 +431,11 @@ function joinNames(names) {
   return names.join(', ');
 }
 
-function mergeAnnotation(content, regex, label, names, eol) {
+/**
+ * Adds names to the first existing annotation of this kind. When the file has
+ * none, returns the names as `pending` so the caller can insert a new line.
+ */
+function mergeExisting(content, regex, names) {
   const existing = parseAnnotation(content, regex);
   const seen = new Set(existing.map((n) => n.toLowerCase()));
   const added = names.filter((n) => {
@@ -431,19 +444,147 @@ function mergeAnnotation(content, regex, label, names, eol) {
     seen.add(key);
     return true;
   });
-  if (!added.length) return { content, added };
+  if (!added.length) return { content, added, pending: [] };
 
-  const merged = [...existing, ...added];
   const first = new RegExp(regex.source, 'i').exec(content);
-  if (first) {
-    const captured = first[1];
-    const trailing = /[\s*]*$/.exec(captured)[0];
-    const start = first.index + first[0].length - captured.length;
-    const updated = content.slice(0, start) + joinNames(merged) + trailing + content.slice(start + captured.length);
-    // Later @Tests lines are still read by apextestlist; their names are now on the first line too.
-    return { content: updated, added };
+  if (!first) return { content, added, pending: added };
+  const captured = first[1];
+  const trailing = /[\s*]*$/.exec(captured)[0];
+  const start = first.index + first[0].length - captured.length;
+  const merged = joinNames([...existing, ...added]);
+  // Later lines of the same annotation are still read by apextestlist; their names are now on the first line too.
+  return {
+    content: content.slice(0, start) + merged + trailing + content.slice(start + captured.length),
+    added,
+    pending: [],
+  };
+}
+
+const ANNOTATION_LINE_PREFIX = /^[ \t]*(\/\/|\*)[ \t]*$/;
+
+/** Finds a leading `/* ... *\/` or `//` comment block before any code. */
+function findLeadingHeader(content) {
+  const lead = /^\s*/.exec(content)[0].length;
+  const lineStart = content.lastIndexOf('\n', lead - 1) + 1;
+  if (content.startsWith('/*', lead)) {
+    const close = content.indexOf('*/', lead + 2);
+    if (close === -1) return null;
+    return { type: 'block', start: lead, end: close + 2, close };
   }
-  return { content: `// ${label}: ${joinNames(merged)}${eol}${content}`, added };
+  if (content.startsWith('//', lead)) {
+    const match = /^(?:[ \t]*\/\/[^\n]*(?:\n|$))+/.exec(content.slice(lineStart));
+    return { type: 'line', start: lead, end: lineStart + match[0].length };
+  }
+  return null;
+}
+
+/** Inserts annotation lines inside an existing header; returns null if the header can't take them cleanly. */
+function insertIntoHeader(content, header, inserts, eol) {
+  const lines = (prefix) => inserts.map((i) => `${prefix}${i.label}: ${joinNames(i.names)}${eol}`).join('');
+  if (header.type === 'line') {
+    const atEnd = header.end === content.length && !content.endsWith('\n');
+    const insertion = (atEnd ? eol : '') + lines('// ');
+    return content.slice(0, header.end) + insertion + content.slice(header.end);
+  }
+  const closeLineStart = content.lastIndexOf('\n', header.close - 1) + 1;
+  // A one-line block, or text before `*/` on its closing line, has no clean place for a new line.
+  if (closeLineStart <= header.start || content.slice(closeLineStart, header.close).trim()) return null;
+  const prevLineStart = content.lastIndexOf('\n', closeLineStart - 2) + 1;
+  const prevPrefix = /^([ \t]*\*)(?!\/)/.exec(content.slice(prevLineStart, closeLineStart));
+  const prefix = prevPrefix ? `${prevPrefix[1]} ` : `${content.slice(closeLineStart, header.close)}* `;
+  return content.slice(0, closeLineStart) + lines(prefix) + content.slice(closeLineStart);
+}
+
+/** Inserts the line after an existing @Tests or @TestSuites comment line, using the same prefix. */
+function insertNextToAnnotation(content, inserts, eol) {
+  const match = /@(tests|testsuites)\s*:/i.exec(content);
+  if (!match) return null;
+  const lineStart = content.lastIndexOf('\n', match.index - 1) + 1;
+  const prefix = content.slice(lineStart, match.index);
+  if (!ANNOTATION_LINE_PREFIX.test(prefix)) return null;
+  const lineEnd = content.indexOf('\n', match.index);
+  const insertAt = lineEnd === -1 ? content.length : lineEnd + 1;
+  const lead = lineEnd === -1 ? eol : '';
+  const text = inserts.map((i) => `${prefix}${i.label}: ${joinNames(i.names)}${eol}`).join('');
+  return content.slice(0, insertAt) + lead + text + content.slice(insertAt);
+}
+
+function insertAnnotations(content, inserts, eol, template, target) {
+  const nextTo = insertNextToAnnotation(content, inserts, eol);
+  if (nextTo !== null) return nextTo;
+  if (template) {
+    const header = findLeadingHeader(content);
+    if (header) {
+      const inHeader = insertIntoHeader(content, header, inserts, eol);
+      if (inHeader !== null) return inHeader;
+    } else {
+      const values = { name: target.name, kind: target.kind, tests: '', suites: '' };
+      for (const i of inserts) values[i.label === '@Tests' ? 'tests' : 'suites'] = joinNames(i.names);
+      return renderTemplate(template, values, eol) + content;
+    }
+  }
+  return inserts.map((i) => `// ${i.label}: ${joinNames(i.names)}${eol}`).join('') + content;
+}
+
+// ---------- header template ----------
+
+const TEMPLATE_PLACEHOLDERS = new Set(['name', 'kind', 'tests', 'suites']);
+
+/**
+ * Reads and checks a header template: comment lines only, `{{tests}}` (and the
+ * optional `{{suites}}`) alone at the end of an `@Tests:` / `@TestSuites:` line,
+ * so apextestlist reads the names and nothing after them.
+ */
+function loadTemplate(file) {
+  let raw;
+  try {
+    raw = stripBom(readFileSync(file, 'utf8'));
+  } catch (error) {
+    fail(`Cannot read header template ${file}: ${error.message}`);
+  }
+  const lines = raw.replace(/\r\n/g, '\n').replace(/\n+$/, '').split('\n');
+  const problems = [];
+  const nonBlank = lines.filter((l) => l.trim());
+  if (!nonBlank.length) problems.push('it is empty');
+  const first = nonBlank[0]?.trim() ?? '';
+  const type = first.startsWith('/*') ? 'block' : first.startsWith('//') ? 'line' : null;
+  if (!type) problems.push('it must start with a /* or // comment');
+  for (const [index, line] of lines.entries()) {
+    const text = line.trim();
+    if (text && !/^(\/\/|\/\*|\*)/.test(text)) problems.push(`line ${index + 1} is not a comment line`);
+    for (const m of line.matchAll(/\{\{\s*([^}]*?)\s*\}\}/g)) {
+      if (!TEMPLATE_PLACEHOLDERS.has(m[1])) problems.push(`line ${index + 1}: unknown placeholder {{${m[1]}}}`);
+    }
+  }
+  if (type === 'block') {
+    const closeIndex = lines.findIndex((l) => l.includes('*/'));
+    if (closeIndex === -1) problems.push('the /* comment is never closed with */');
+    else if (lines.slice(closeIndex + 1).some((l) => l.trim())) problems.push('text follows the closing */');
+  }
+  const checkLine = (placeholder, label, required) => {
+    const found = lines.filter((l) => l.includes(`{{${placeholder}}}`));
+    if (!found.length && required) problems.push(`it needs a "${label}: {{${placeholder}}}" line`);
+    if (found.length > 1) problems.push(`{{${placeholder}}} appears more than once`);
+    const pattern = new RegExp(`${label}\\s*:\\s*\\{\\{${placeholder}\\}\\}\\s*$`, 'i');
+    if (found.length === 1 && !pattern.test(found[0])) {
+      problems.push(`"${found[0].trim()}" must end with "${label}: {{${placeholder}}}", with nothing after it`);
+    }
+  };
+  checkLine('tests', '@Tests', true);
+  checkLine('suites', '@TestSuites', false);
+  if (problems.length) fail(`Header template ${file} has problems:\n  ${problems.join('\n  ')}`);
+  return { lines, type };
+}
+
+function renderTemplate(template, values, eol) {
+  const out = [];
+  for (const line of template.lines) {
+    // Leave out an annotation line with nothing to list; an empty @Tests: would add a blank test name.
+    if (line.includes('{{tests}}') && !values.tests) continue;
+    if (line.includes('{{suites}}') && !values.suites) continue;
+    out.push(line.replace(/\{\{(name|kind|tests|suites)\}\}/g, (_, key) => values[key]));
+  }
+  return out.join(eol) + eol;
 }
 
 function normalizePlanEntry(key, value) {
@@ -467,6 +608,7 @@ function apply(opts) {
   }
   if (!plan || typeof plan !== 'object' || Array.isArray(plan)) fail('Plan must be a JSON object');
 
+  const template = opts.headerTemplate ? loadTemplate(opts.headerTemplate) : null;
   const project = loadProject(opts);
   const suiteNames = new Set(project.suites.map((s) => s.name.toLowerCase()));
   const errors = [];
@@ -528,10 +670,14 @@ function apply(opts) {
     const bom = original.charCodeAt(0) === 0xfeff ? '﻿' : '';
     const eol = original.includes('\r\n') ? '\r\n' : '\n';
     let content = stripBom(original);
-    const t = mergeAnnotation(content, TEST_NAME_REGEX, '@Tests', tests, eol);
+    const t = mergeExisting(content, TEST_NAME_REGEX, tests);
     content = t.content;
-    const s = mergeAnnotation(content, TEST_SUITE_NAME_REGEX, '@TestSuites', suites, eol);
+    const s = mergeExisting(content, TEST_SUITE_NAME_REGEX, suites);
     content = s.content;
+    const inserts = [];
+    if (t.pending.length) inserts.push({ label: '@Tests', names: t.pending });
+    if (s.pending.length) inserts.push({ label: '@TestSuites', names: s.pending });
+    if (inserts.length) content = insertAnnotations(content, inserts, eol, template, target);
     const changed = t.added.length > 0 || s.added.length > 0;
     if (changed && !opts.dryRun) writeFileSync(target.path, bom + content, 'utf8');
     report.push({ file: target.file, addedTests: t.added, addedSuites: s.added, changed });
@@ -596,7 +742,29 @@ function readTestDependencies(root) {
   return { map, problems };
 }
 
+/** Annotated files whose annotations aren't inside a leading header of the template's comment style. */
+function headerProblems(targets, template) {
+  const problems = [];
+  for (const t of targets) {
+    if (!t.tests.length && !t.suites.length) continue;
+    const content = stripBom(readFileSync(t.path, 'utf8'));
+    const header = findLeadingHeader(content);
+    const first = /@(tests|testsuites)\s*:/i.exec(content);
+    if (!header) problems.push({ file: t.file, issue: 'no leading header comment' });
+    else if (header.type !== template.type) {
+      problems.push({
+        file: t.file,
+        issue: `header is a ${header.type} comment; the template uses a ${template.type} comment`,
+      });
+    } else if (first.index < header.start || first.index >= header.end) {
+      problems.push({ file: t.file, issue: 'annotation is outside the leading header' });
+    }
+  }
+  return problems;
+}
+
 function audit(opts) {
+  const template = opts.headerTemplate ? loadTemplate(opts.headerTemplate) : null;
   const project = loadProject(opts);
   const coverage = loadCoverage(opts.coverage);
   const suiteByLower = new Map(project.suites.map((s) => [s.name.toLowerCase(), s]));
@@ -678,6 +846,7 @@ function audit(opts) {
     broad,
     coverageGaps,
     testDependencies: deps ? { tests: deps.map.size, problems: depProblems } : null,
+    headerProblems: template ? headerProblems(targets, template) : null,
   };
 
   if (opts.json) {
@@ -711,6 +880,13 @@ function audit(opts) {
           ]
             .filter(Boolean)
             .join('; ')}`,
+    );
+  }
+  if (template) {
+    section(
+      'Annotations not in a leading header like the template',
+      result.headerProblems,
+      (x) => `${x.file}: ${x.issue}`,
     );
   }
   if (deps) section(`${TEST_DEPENDENCIES_FILE} problems`, depProblems, (x) => x);

@@ -22,6 +22,11 @@ install. It needs Node.js 22.19 or newer and doesn't change files in `scan` or
 2. Confirm `node --version` is 22.19 or newer.
 3. Ask whether any package directories should be skipped, and pass each with
    `--ignore-package-directory <path>`.
+4. If the project has an Apex header template (see the `annotate-tests` skill),
+   add `--header-template <file>` to the audit. It then also reports annotated
+   files whose annotations aren't inside a leading header of the template's
+   comment style (`/** */` or `//`). Fix those with the user; don't rewrite
+   headers on your own.
 
 ## Step 2: Static audit
 

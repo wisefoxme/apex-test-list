@@ -193,7 +193,7 @@ describe('apex-test-map apply', () => {
     write(plan, JSON.stringify({ Crlf: { tests: ['OtherDmlTest'], suites: ['Sales'] } }));
     expect(run('apply', '--plan', plan).status).toBe(0);
     expect(readFileSync(join(classes, 'Crlf.cls'), 'utf8')).toBe(
-      '// @TestSuites: Sales\r\n// @Tests: AccountServiceTest, OtherDmlTest\r\npublic class Crlf {}\r\n',
+      '// @Tests: AccountServiceTest, OtherDmlTest\r\n// @TestSuites: Sales\r\npublic class Crlf {}\r\n',
     );
   });
 
@@ -231,6 +231,140 @@ describe('apex-test-map apply', () => {
     expect(result.stderr).toContain('prefix the key with "class:" or "trigger:"');
     write(plan, JSON.stringify({ 'class:AccountService': ['AccountServiceTest'] }));
     expect(run('apply', '--plan', plan).status).toBe(0);
+  });
+});
+
+describe('apex-test-map header template', () => {
+  const TEMPLATE = [
+    '/**',
+    ' * @description TODO describe {{name}}',
+    ' * @Tests: {{tests}}',
+    ' * @TestSuites: {{suites}}',
+    ' */',
+    '',
+  ].join('\n');
+
+  function setup(template = TEMPLATE): { plan: string; templateFile: string } {
+    const templateFile = join(project, 'header.txt');
+    write(templateFile, template);
+    write(
+      join(project, 'force-app', 'main', 'default', 'testSuites', 'Sales.testSuite-meta.xml'),
+      '<ApexTestSuite><testClassName>OtherDmlTest</testClassName></ApexTestSuite>',
+    );
+    return { plan: join(project, 'plan.json'), templateFile };
+  }
+
+  it('adds the template to files without a header, leaving out empty annotation lines', () => {
+    const { plan, templateFile } = setup();
+    write(plan, JSON.stringify({ AccountService: ['AccountServiceTest'] }));
+    expect(run('apply', '--plan', plan, '--header-template', templateFile).status).toBe(0);
+    expect(readFileSync(join(classes, 'AccountService.cls'), 'utf8')).toBe(
+      '/**\r\n * @description TODO describe AccountService\r\n * @Tests: AccountServiceTest\r\n */\r\n' +
+        'public class AccountService {\r\n  public static void run() {}\r\n}\r\n',
+    );
+    const scanned = runJson<ScanOutput>('scan', '--only', 'AccountService');
+    expect(target(scanned, 'AccountService').existing).toEqual({ tests: ['AccountServiceTest'], suites: [] });
+  });
+
+  it('adds lines inside an existing header without rewriting it', () => {
+    const { plan, templateFile } = setup();
+    write(
+      join(classes, 'Orphan.cls'),
+      '/**\n  * @author Someone\n  * @description Keeps going\n  */\npublic class Orphan {}\n',
+    );
+    write(
+      join(classes, 'AccountTriggerHandler.cls'),
+      '// Copyright Acme\n// Handler\npublic class AccountTriggerHandler { public void go() {} }\n',
+    );
+    write(
+      plan,
+      JSON.stringify({
+        Orphan: { tests: ['OtherDmlTest'], suites: ['Sales'] },
+        AccountTriggerHandler: ['AccountTriggerHandlerTest'],
+      }),
+    );
+    expect(run('apply', '--plan', plan, '--header-template', templateFile).status).toBe(0);
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe(
+      '/**\n  * @author Someone\n  * @description Keeps going\n  * @Tests: OtherDmlTest\n  * @TestSuites: Sales\n  */\npublic class Orphan {}\n',
+    );
+    expect(readFileSync(join(classes, 'AccountTriggerHandler.cls'), 'utf8')).toBe(
+      '// Copyright Acme\n// Handler\n// @Tests: AccountTriggerHandlerTest\npublic class AccountTriggerHandler { public void go() {} }\n',
+    );
+  });
+
+  it('merges into existing annotations and puts a new one next to them', () => {
+    const { plan, templateFile } = setup();
+    write(
+      join(classes, 'Orphan.cls'),
+      '/**\n * @Tests: AccountServiceTest\n * @since 1.0\n */\npublic class Orphan {}\n',
+    );
+    write(plan, JSON.stringify({ Orphan: { tests: ['OtherDmlTest'], suites: ['Sales'] } }));
+    expect(run('apply', '--plan', plan, '--header-template', templateFile).status).toBe(0);
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe(
+      '/**\n * @Tests: AccountServiceTest, OtherDmlTest\n * @TestSuites: Sales\n * @since 1.0\n */\npublic class Orphan {}\n',
+    );
+  });
+
+  it('falls back to a // line when the header has no room for a new line', () => {
+    const { plan, templateFile } = setup();
+    write(join(classes, 'Orphan.cls'), '/** Orphan class */\npublic class Orphan {}\n');
+    write(plan, JSON.stringify({ Orphan: ['OtherDmlTest'] }));
+    expect(run('apply', '--plan', plan, '--header-template', templateFile).status).toBe(0);
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe(
+      '// @Tests: OtherDmlTest\n/** Orphan class */\npublic class Orphan {}\n',
+    );
+  });
+
+  it('rejects templates apextestlist would misread', () => {
+    const { plan, templateFile } = setup('/** @Tests: {{tests}} */\npublic class X {}\n * {{author}}\n');
+    write(plan, JSON.stringify({ Orphan: ['OtherDmlTest'] }));
+    const result = run('apply', '--plan', plan, '--header-template', templateFile);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('line 2 is not a comment line');
+    expect(result.stderr).toContain('unknown placeholder {{author}}');
+    expect(result.stderr).toContain('must end with "@Tests: {{tests}}"');
+    expect(result.stderr).toContain('text follows the closing */');
+
+    write(templateFile, '// header only\n');
+    expect(run('apply', '--plan', plan, '--header-template', templateFile).stderr).toContain(
+      'it needs a "@Tests: {{tests}}" line',
+    );
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe('public class Orphan {}\n');
+  });
+
+  it('audits annotations against the template style', () => {
+    const { templateFile } = setup();
+    write(join(classes, 'Orphan.cls'), '/**\n * @Tests: OtherDmlTest\n */\npublic class Orphan {}\n');
+    write(join(classes, 'AccountService.cls'), '// @Tests: AccountServiceTest\npublic class AccountService {}\n');
+    write(
+      join(classes, 'AccountTriggerHandler.cls'),
+      '/** Handler */\n// @Tests: AccountTriggerHandlerTest\npublic class AccountTriggerHandler {}\n',
+    );
+    write(
+      join(triggers, 'AccountTrigger.trigger'),
+      'trigger AccountTrigger on Account (before insert) {} // @Tests: OtherDmlTest\n',
+    );
+    const output = runJson<{ headerProblems: Array<{ file: string; issue: string }> }>(
+      'audit',
+      '--header-template',
+      templateFile,
+    );
+    expect(output.headerProblems).toEqual([
+      {
+        file: 'force-app/main/default/classes/AccountService.cls',
+        issue: 'header is a line comment; the template uses a block comment',
+      },
+      {
+        file: 'force-app/main/default/classes/AccountTriggerHandler.cls',
+        issue: 'annotation is outside the leading header',
+      },
+      {
+        file: 'force-app/main/default/classes/AccountUtil.cls',
+        issue: 'header is a line comment; the template uses a block comment',
+      },
+      { file: 'force-app/main/default/triggers/AccountTrigger.trigger', issue: 'no leading header comment' },
+    ]);
+    expect(runJson<{ headerProblems: null }>('audit').headerProblems).toBeNull();
   });
 });
 

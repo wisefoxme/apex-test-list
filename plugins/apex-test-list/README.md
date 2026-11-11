@@ -40,6 +40,7 @@ and edits files only when you approve a plan.
 
 - "Add @Tests annotations to every Apex class that doesn't have one"
 - "Map our triggers to their tests using coverage from my dev sandbox"
+- "Annotate our classes using the ApexDoc header in config/apex-header.txt"
 - "Which tests will run if I deploy the changes on this branch?"
 - "Audit our @Tests annotations against org coverage"
 - "Build a .test-dependencies.yml for our Account flows and validation rules"

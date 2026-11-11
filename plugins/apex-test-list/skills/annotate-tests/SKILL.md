@@ -41,6 +41,47 @@ apextestlist reads annotations with `/@tests\s*:\s*([^/\n]+)/gi`:
 4. Note uncommitted changes in Apex files (`git status --porcelain -- '*.cls' '*.trigger'`).
    If there are any, tell the user, so their edits and the annotations stay
    distinguishable in the diff.
+5. Ask whether the project has a standard Apex header comment, and whether the
+   annotations should go in it. If it does, use a header template (see
+   [Header template](#header-template)). Otherwise annotations are plain
+   `// @Tests:` lines at the top of each file.
+
+## Header template
+
+A header template is a comment that every Apex file should start with. Look
+for one first: a file the user names, a template in the repository (often
+under `config/`), or the header most classes already share. If there is none
+and the user wants one, write it with them and save it in the repository, for
+example `config/apex-header.txt`, so the whole team uses the same file:
+
+```apex
+/**
+ * @description {{name}}
+ * @Tests: {{tests}}
+ * @TestSuites: {{suites}}
+ */
+```
+
+- Placeholders: `{{name}}` (class or trigger name), `{{kind}}` (`class` or
+  `trigger`), `{{tests}}`, and `{{suites}}`. Nothing else is filled in; write
+  other tags such as `@author` as fixed text, or leave them out. Never guess an
+  author or a date.
+- `{{tests}}` must end its `@Tests:` line, and `{{suites}}` its `@TestSuites:`
+  line, with no `*/` after them, because apextestlist reads to the end of the
+  line. The command checks this and stops with an explanation if not.
+- An annotation line with nothing to list is left out, so a file with tests but
+  no suites gets no empty `@TestSuites:` line.
+
+With `--header-template <file>`, `apply`:
+
+- merges new names into an `@Tests:` or `@TestSuites:` line the file already has;
+- adds the lines inside the file's existing header comment, without changing
+  anything else in it;
+- adds the whole template to a file that has no header.
+
+It never rewrites an existing header to match the template. If the user wants
+that, treat it as a separate change with its own review, not part of
+annotating tests.
 
 ## Step 2: Get coverage data (recommended)
 
@@ -140,11 +181,14 @@ npx -y -p apextestlist@1 apex-test-map apply --plan <temp folder>/plan.json --dr
 npx -y -p apextestlist@1 apex-test-map apply --plan <temp folder>/plan.json
 ```
 
+Add `--header-template <file>` to both commands when the project uses one.
+
 `apply` checks the whole plan first and changes nothing if any name is not a
-local test class or suite (`--allow-unknown` allows org-only tests). It adds a
-`// @Tests:` line at the top of each file, or merges new names into the first
-existing one, and keeps the file's line endings. Running it twice changes
-nothing.
+local test class or suite (`--allow-unknown` allows org-only tests). It merges
+new names into the first existing annotation, adds a missing one on the next
+line with the same comment prefix, and otherwise adds a `// @Tests:` line at the
+top of the file (or follows the header template). It keeps the file's line
+endings. Running it twice changes nothing.
 
 ## Step 6: Verify
 
