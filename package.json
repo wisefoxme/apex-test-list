@@ -153,19 +153,21 @@
       "clean": "if-file-deleted"
     },
     "format": {
-      "command": "biome format --write src test",
+      "command": "biome format --write src test plugins",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
+        "plugins/**/*.{mjs,json}",
         "biome.json"
       ],
       "output": []
     },
     "lint": {
-      "command": "biome check src test",
+      "command": "biome check src test plugins",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
+        "plugins/**/*.{mjs,json}",
         "messages/**",
         "biome.json",
         "**/tsconfig.json"

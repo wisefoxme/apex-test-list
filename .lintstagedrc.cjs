@@ -1,3 +1,3 @@
 module.exports = {
-  '**/*.{ts,js}': ['npx @biomejs/biome check --error-on-warnings --write'],
+  '**/*.{ts,js,mjs}': ['npx @biomejs/biome check --error-on-warnings --write'],
 };

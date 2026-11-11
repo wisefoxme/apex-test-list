@@ -25,6 +25,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
 - [GitHub Action](#github-action)
+- [Claude Code Plugin](#claude-code-plugin)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
 - [License](#license)
@@ -238,6 +239,24 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
 | `test-count`  | Number of Apex test class names found.                                             |
 | `command`     | The formatted test list, ready to append to a Salesforce CLI deploy/validate command. |
 | `warnings`    | Newline-separated list of warnings emitted while listing tests, if any.            |
+
+## Claude Code Plugin
+
+Annotating an existing org by hand is the main cost of adopting this plugin. The [Claude Code](https://claude.com/claude-code) plugin in [`plugins/apex-test-list`](plugins/apex-test-list) does it for you: Claude maps each Apex class and trigger to the tests that cover it, using org code coverage when you have an org or static analysis of your test code when you don't, shows you the plan, and writes the `// @Tests:` annotations.
+
+Every mapping stays a reviewable line in your source, and `sf apextests list` shows exactly which tests a deployment will run, unlike server-side test selection.
+
+```text
+/plugin marketplace add wisefoxme/apex-test-list
+/plugin install apex-test-list@apex-test-list
+```
+
+| Skill            | What it does                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `annotate-tests` | Proposes tests per class and trigger (coverage, naming, references, trigger handlers), then writes or merges `@Tests`. |
+| `audit-tests`    | Finds unannotated classes, unknown or non-test names, missing suites, broad annotations, and drift from org coverage.  |
+
+See the [plugin README](plugins/apex-test-list/README.md) for requirements and data handling.
 
 ## Command Reference
 
