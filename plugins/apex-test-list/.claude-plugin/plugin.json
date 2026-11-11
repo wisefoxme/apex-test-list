@@ -1,5 +1,6 @@
 {
   "name": "apex-test-list",
+  "version": "1.15.5",
   "description": "Map Apex classes and triggers to the tests that cover them with reviewable @Tests annotations, and audit those annotations against org coverage, for selective test runs with the apextestlist Salesforce CLI plugin.",
   "author": {
     "name": "Renato Oliveira"
@@ -7,5 +8,12 @@
   "homepage": "https://github.com/wisefoxme/apex-test-list",
   "repository": "https://github.com/wisefoxme/apex-test-list",
   "license": "BSD-3-Clause",
-  "keywords": ["salesforce", "salesforcedx", "apex", "tests", "ci", "deployment"]
+  "keywords": [
+    "salesforce",
+    "salesforcedx",
+    "apex",
+    "tests",
+    "ci",
+    "deployment"
+  ]
 }

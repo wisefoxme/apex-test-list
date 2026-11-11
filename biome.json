@@ -119,6 +119,17 @@
   "overrides": [
     {
       "includes": [
+        "plugins/*/.claude-plugin/plugin.json",
+        ".release-please-manifest.json"
+      ],
+      "json": {
+        "formatter": {
+          "expand": "always"
+        }
+      }
+    },
+    {
+      "includes": [
         "**/*.ts",
         "**/*.tsx",
         "**/*.mts",

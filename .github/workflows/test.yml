@@ -37,6 +37,11 @@ jobs:
       - name: Check Node.js engine versions
         run: npm run lint:engine
 
+      - name: Validate Claude Code plugin
+        run: |
+          npx -y @anthropic-ai/claude-code@2.1.316 plugin validate .
+          npx -y @anthropic-ai/claude-code@2.1.316 plugin validate plugins/apex-test-list
+
   unit-tests:
     name: Unit Tests (${{ matrix.os }}, node ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
