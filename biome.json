@@ -1,8 +1,23 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignoreUnknown": true, "includes": ["**", "!test/fixtures/**"] },
-  "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!test/fixtures/**"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -86,18 +101,34 @@
         "useNamespaceKeyword": "error"
       }
     },
-    "includes": ["**", "!**/*.cjs", "!scripts/", "!lib/"]
+    "includes": [
+      "**",
+      "!**/*.cjs",
+      "!scripts/",
+      "!lib/"
+    ]
   },
   "javascript": {
-    "formatter": { "quoteStyle": "single", "trailingCommas": "all", "semicolons": "always" },
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "always"
+    },
     "globals": []
   },
   "overrides": [
     {
-      "includes": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+      "includes": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.mts",
+        "**/*.cts"
+      ],
       "linter": {
         "rules": {
-          "complexity": { "noArguments": "error" },
+          "complexity": {
+            "noArguments": "error"
+          },
           "correctness": {
             "noConstAssign": "off",
             "noGlobalObjectCalls": "off",
@@ -108,7 +139,10 @@
             "noUnreachable": "off",
             "noUnreachableSuper": "off"
           },
-          "style": { "useConst": "error", "useSpreadOverApply": "error" },
+          "style": {
+            "useConst": "error",
+            "useSpreadOverApply": "error"
+          },
           "suspicious": {
             "noClassAssign": "off",
             "noDuplicateClassMembers": "off",
@@ -126,9 +160,21 @@
       }
     },
     {
-      "includes": ["test/**/*.ts"],
+      "includes": [
+        "test/**/*.ts"
+      ],
       "javascript": {
-        "globals": ["describe", "beforeAll", "beforeEach", "afterAll", "expect", "it", "afterEach", "vi", "test"]
+        "globals": [
+          "describe",
+          "beforeAll",
+          "beforeEach",
+          "afterAll",
+          "expect",
+          "it",
+          "afterEach",
+          "vi",
+          "test"
+        ]
       },
       "linter": {
         "rules": {
@@ -143,6 +189,10 @@
   ],
   "assist": {
     "enabled": true,
-    "actions": { "source": { "organizeImports": "on" } }
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   }
 }
