@@ -2,7 +2,7 @@
   "name": "apex-test-list",
   "description": "apex-test-list: run only the Apex tests that matter, with test selection you can read and review.",
   "owner": {
-    "name": "Matt Carvin"
+    "name": "Renato Oliveira"
   },
   "plugins": [
     {
