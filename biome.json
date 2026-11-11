@@ -9,7 +9,8 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
-      "!test/fixtures/**"
+      "!test/fixtures/**",
+      "!plugins/**/SKILL.md"
     ]
   },
   "formatter": {

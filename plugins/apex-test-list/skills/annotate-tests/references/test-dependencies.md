@@ -51,7 +51,7 @@ that depends on them; they rarely change through deployments.
 ## Checks
 
 - Every key must be a local `@isTest` class. Run the audit
-  (`apex-test-map.mjs audit`), which reports unknown keys and entries that
+  (`npx -y -p apextestlist@1 apex-test-map audit`), which reports unknown keys and entries that
   aren't `Type:Member`.
 - If an existing file is present, merge into it. Keep the user's entries and
   ordering, and show the diff before saving.

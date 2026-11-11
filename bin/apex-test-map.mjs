@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// apex-test-map: helper for the apex-test-list Claude Code plugin.
+// apex-test-map: helper for the apex-test-list Claude Code plugin, published as
+// the `apex-test-map` bin of the apextestlist npm package.
 //
 // Scans a Salesforce DX project and maps each Apex class and trigger to the
 // test classes that exercise it, so `// @Tests:` annotations can be written
@@ -14,7 +15,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
-const USAGE = `Usage: node apex-test-map.mjs <scan|apply|audit> [options]
+const USAGE = `Usage: apex-test-map <scan|apply|audit> [options]
 
 Common options:
   --project <dir>                  Salesforce DX project folder (default: nearest

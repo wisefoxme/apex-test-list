@@ -32,7 +32,11 @@
   "engines": {
     "node": ">=22.19.0 <=26"
   },
+  "bin": {
+    "apex-test-map": "./bin/apex-test-map.mjs"
+  },
   "files": [
+    "/bin/apex-test-map.mjs",
     "/lib",
     "!/lib/action",
     "/messages",
@@ -153,21 +157,23 @@
       "clean": "if-file-deleted"
     },
     "format": {
-      "command": "biome format --write src test plugins",
+      "command": "biome format --write src test plugins bin/apex-test-map.mjs",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
-        "plugins/**/*.{mjs,json}",
+        "plugins/**/*.{md,json}",
+        "bin/apex-test-map.mjs",
         "biome.json"
       ],
       "output": []
     },
     "lint": {
-      "command": "biome check src test plugins",
+      "command": "biome check src test plugins bin/apex-test-map.mjs",
       "files": [
         "src/**/*.ts",
         "test/**/*.ts",
-        "plugins/**/*.{mjs,json}",
+        "plugins/**/*.{md,json}",
+        "bin/apex-test-map.mjs",
         "messages/**",
         "biome.json",
         "**/tsconfig.json"

@@ -6,7 +6,15 @@ function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(resolve(process.cwd(), path), 'utf-8')) as T;
 }
 
-const root = readJson<{ version: string }>('package.json');
+const root = readJson<{ version: string; bin: Record<string, string>; files: string[] }>('package.json');
+
+describe('apex-test-map command', () => {
+  it('is published as a bin of the npm package, which the plugin skills run with npx', () => {
+    expect(root.bin).toEqual({ 'apex-test-map': './bin/apex-test-map.mjs' });
+    expect(root.files).toContain('/bin/apex-test-map.mjs');
+    expect(readFileSync(resolve(process.cwd(), 'bin/apex-test-map.mjs'), 'utf-8')).toMatch(/^#!\/usr\/bin\/env node\n/);
+  });
+});
 
 describe('Claude Code plugin', () => {
   it('has the same version as the npm package, so Claude Code offers updates on each release', () => {

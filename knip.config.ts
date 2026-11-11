@@ -5,7 +5,6 @@ export default {
     'bin/dev.js',
     'bin/run.js',
     'scripts/**/*.{ts,mjs}',
-    'plugins/**/scripts/*.mjs',
     '**/*.{nut,test,perf}.ts',
     'vitest*.config.ts',
     '.github/**/*.yml',

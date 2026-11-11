@@ -1,7 +1,6 @@
 ---
-
 name: audit-tests
-description: Use when the user wants to check the Apex test annotations used by the apextestlist plugin (`sf apextests list`) in a Salesforce DX project, such as "which classes have no @Tests", "find stale test annotations", "check our @Tests against org coverage", "why didn't this test run in the deploy", "what tests will run for this change", or "audit .test-dependencies.yml". Reports classes without annotations, names that aren't test classes, missing suites, overly broad annotations, and differences from org code coverage, then offers fixes. Read-only unless the user approves changes. Needs Node.js 22+; the Salesforce CLI is optional.
+description: Use when the user wants to check the Apex test annotations used by the apextestlist plugin (`sf apextests list`) in a Salesforce DX project, such as "which classes have no @Tests", "find stale test annotations", "check our @Tests against org coverage", "why didn't this test run in the deploy", "what tests will run for this change", or "audit .test-dependencies.yml". Reports classes without annotations, names that aren't test classes, missing suites, overly broad annotations, and differences from org code coverage, then offers fixes. Read-only unless the user approves changes. Needs Node.js 22.19+; the Salesforce CLI is optional.
 ---
 
 # Audit Apex test annotations
@@ -11,23 +10,23 @@ without annotations, and coverage moves as code changes. This skill finds those
 problems and shows exactly which tests a change would run, so the selection
 stays transparent instead of trusted blindly.
 
-The audit uses the helper script from the `annotate-tests` skill in this
-plugin: `../annotate-tests/scripts/apex-test-map.mjs`, relative to this skill's
-folder (below, `$MAP` means `node <that path>`). It needs only Node.js 22 or
-newer and doesn't change files in `scan` or `audit`.
+The audit runs the `apex-test-map` command from the `apextestlist` npm package
+with `npx -y -p apextestlist@1 apex-test-map`, which needs no Salesforce CLI or plugin
+install. It needs Node.js 22.19 or newer and doesn't change files in `scan` or
+`audit`.
 
 ## Step 1: Check the project
 
 1. Find `sfdx-project.json` in the working directory or a parent and run
    commands from its folder. Without one, stop.
-2. Confirm `node --version` is 22 or newer.
+2. Confirm `node --version` is 22.19 or newer.
 3. Ask whether any package directories should be skipped, and pass each with
    `--ignore-package-directory <path>`.
 
 ## Step 2: Static audit
 
 ```bash
-$MAP audit
+npx -y -p apextestlist@1 apex-test-map audit
 ```
 
 It reports:
@@ -49,7 +48,7 @@ coverage as described in the `annotate-tests` skill (Step 2), to a temporary
 folder outside the project, then:
 
 ```bash
-$MAP audit --coverage <temp folder>/coverage.json
+npx -y -p apextestlist@1 apex-test-map audit --coverage <temp folder>/coverage.json
 ```
 
 This adds, per annotated class:
@@ -75,7 +74,7 @@ For "which tests will run for this change" or "why didn't X run":
 2. If the plugin is installed, run
    `sf apextests list --manifest <temp folder>/package/package.xml --ignore-missing-tests`
    and show the output and its warnings. Otherwise read the annotations of the
-   changed files with `$MAP scan --only Name1,Name2` and list the union of their
+   changed files with `npx -y -p apextestlist@1 apex-test-map scan --only Name1,Name2` and list the union of their
    `existing` tests, plus any changed test classes.
 3. For a test that didn't run, point to the missing link: no annotation on the
    changed class, a misspelled name, or a suite that doesn't list it.
@@ -93,4 +92,4 @@ until the user picks what to fix.
 - **Missing suite or suite entries**: update `testSuites/*.testSuite-meta.xml`
   or the annotation, whichever the user says is wrong.
 
-After fixing, run `$MAP audit` again and show the before and after counts.
+After fixing, run `npx -y -p apextestlist@1 apex-test-map audit` again and show the before and after counts.

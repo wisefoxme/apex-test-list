@@ -1,7 +1,6 @@
 ---
-
 name: annotate-tests
-description: Use when the user wants to map Apex classes and triggers to the tests that cover them in a Salesforce DX project, so deployments run only the relevant tests with the apextestlist plugin (`sf apextests list`). Examples include "add @Tests annotations to our Apex classes", "which tests should run when AccountService changes", "set up test annotations for apex-test-list", "annotate the classes that have no @Tests", or "map our triggers to their tests". Proposes mappings from org code coverage (when an org is connected) or from static analysis of the test code, has the user review them, then writes `// @Tests:` comments. Unlike Salesforce's server-side RunRelevantTests, every mapping is in the source and reviewable. Needs Node.js 22+; the Salesforce CLI is optional.
+description: Use when the user wants to map Apex classes and triggers to the tests that cover them in a Salesforce DX project, so deployments run only the relevant tests with the apextestlist plugin (`sf apextests list`). Examples include "add @Tests annotations to our Apex classes", "which tests should run when AccountService changes", "set up test annotations for apex-test-list", "annotate the classes that have no @Tests", or "map our triggers to their tests". Proposes mappings from org code coverage (when an org is connected) or from static analysis of the test code, has the user review them, then writes `// @Tests:` comments. Unlike Salesforce's server-side RunRelevantTests, every mapping is in the source and reviewable. Needs Node.js 22.19+; the Salesforce CLI is optional.
 ---
 
 # Annotate Apex classes with the tests that cover them
@@ -12,10 +11,11 @@ a `--tests` list for `sf project deploy start --test-level RunSpecifiedTests`.
 This skill writes those comments. Every mapping lives in the source, so the
 team can review it in a pull request and see exactly which tests a deploy runs.
 
-A helper script does the scanning and file edits, so large projects don't have
-to be read file by file. It is `scripts/apex-test-map.mjs` in this skill's
-folder (below, `$MAP` means `node <this skill's folder>/scripts/apex-test-map.mjs`).
-It needs only Node.js 22 or newer and changes files only in `apply`.
+The `apex-test-map` command does the scanning and file edits, so large
+projects don't have to be read file by file. It ships in the `apextestlist` npm
+package, and `npx -y -p apextestlist@1 apex-test-map` runs it without the Salesforce
+CLI or a plugin install. It needs Node.js 22.19 or newer and changes files only
+in `apply`.
 
 ## Annotation rules
 
@@ -35,7 +35,7 @@ apextestlist reads annotations with `/@tests\s*:\s*([^/\n]+)/gi`:
 1. Find `sfdx-project.json` in the working directory or a parent. If there is
    none, stop: this only works in a Salesforce DX project. Run commands from
    the folder that holds it.
-2. Confirm `node --version` is 22 or newer.
+2. Confirm `node --version` is 22.19 or newer.
 3. Ask which package directories to skip, if any (managed or vendored code).
    Pass each with `--ignore-package-directory <path>`.
 4. Note uncommitted changes in Apex files (`git status --porcelain -- '*.cls' '*.trigger'`).
@@ -76,7 +76,7 @@ static analysis only, and that they miss indirect coverage.
 ## Step 3: Scan
 
 ```bash
-$MAP scan [--coverage <temp folder>/coverage.json] [--missing-only] [--only Name1,Name2]
+npx -y -p apextestlist@1 apex-test-map scan [--coverage <temp folder>/coverage.json] [--missing-only] [--only Name1,Name2]
 ```
 
 Use `--missing-only` for a first pass on a project that already has some
@@ -136,8 +136,8 @@ a class and a trigger share a name.
 Preview, then write:
 
 ```bash
-$MAP apply --plan <temp folder>/plan.json --dry-run
-$MAP apply --plan <temp folder>/plan.json
+npx -y -p apextestlist@1 apex-test-map apply --plan <temp folder>/plan.json --dry-run
+npx -y -p apextestlist@1 apex-test-map apply --plan <temp folder>/plan.json
 ```
 
 `apply` checks the whole plan first and changes nothing if any name is not a
@@ -148,7 +148,7 @@ nothing.
 
 ## Step 6: Verify
 
-1. Run `$MAP audit` and fix anything it reports about the new annotations.
+1. Run `npx -y -p apextestlist@1 apex-test-map audit` and fix anything it reports about the new annotations.
 2. If the Salesforce CLI and the plugin are installed (`sf plugins inspect apextestlist`),
    run `sf apextests list --ignore-missing-tests` and show the user the list it
    produces. Don't install the plugin yourself; the user confirms that install.

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-const SCRIPT = resolve('plugins/apex-test-list/skills/annotate-tests/scripts/apex-test-map.mjs');
+const SCRIPT = resolve('bin/apex-test-map.mjs');
 
 type RunResult = { status: number | null; stdout: string; stderr: string };
 

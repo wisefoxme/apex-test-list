@@ -16,8 +16,10 @@ tests a deployment will run before it starts.
 | `annotate-tests` | Proposes tests for each class and trigger from org code coverage (when you have an org) or from static analysis of your test code, lets you review the plan, then writes or merges `// @Tests:` annotations. Can also build `.test-dependencies.yml` for flows, fields, and other non-Apex metadata. |
 | `audit-tests`    | Finds classes without annotations, names that aren't test classes, missing suites, overly broad annotations, and differences from org coverage. Explains which tests a given change will run, and why a test didn't.                                                                                 |
 
-Both use a small Node.js script bundled with the plugin. It has no
-dependencies and edits files only when you approve a plan.
+Both run the `apex-test-map` command from the
+[`apextestlist`](https://www.npmjs.com/package/apextestlist) npm package with
+`npx -y -p apextestlist@1 apex-test-map`. It needs no Salesforce CLI or plugin install,
+and edits files only when you approve a plan.
 
 ## Install
 
@@ -28,7 +30,7 @@ dependencies and edits files only when you approve a plan.
 
 ## Requirements
 
-- Node.js 22 or newer
+- Node.js 22.19 or newer
 - A Salesforce DX project (a folder with `sfdx-project.json`)
 - Optional: the Salesforce CLI with an authorized org, for coverage-based
   mappings, and the `apextestlist` plugin (`sf plugins install apextestlist`)
@@ -47,8 +49,8 @@ dependencies and edits files only when you approve a plan.
 The skills read Apex and metadata files in your local project. With your
 approval, they query `ApexCodeCoverage` from an org you choose through the
 Salesforce CLI and save the result to a temporary folder outside the project.
-They don't run tests in an org unless you ask. Nothing is sent anywhere except
-what Claude itself reads.
+They don't run tests in an org unless you ask. Both skills download the `apextestlist` package from the npm registry through
+`npx`. Nothing is sent anywhere except what Claude itself reads.
 
 ## More
 
