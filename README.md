@@ -26,7 +26,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
 - [GitHub Action](#github-action)
-- [Claude Code Plugin](#claude-code-plugin)
+- [AI Coding Agent Skills](#ai-coding-agent-skills)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
 - [License](#license)
@@ -45,7 +45,7 @@ Salesforce's `RunRelevantTests` test level (beta since Spring '26) also runs onl
 | Indirect dependencies        | Mapped deliberately (for example, a handler's tests on its trigger)                 | Community testing found it can miss indirect and dynamically created classes     |
 | Availability                 | Any org and API version that supports `RunSpecifiedTests`                           | Beta; requires a Spring '26 org                                                  |
 
-Both still require 75% coverage for each Apex class and trigger in the deployment. The cost of explicit selection is writing and maintaining the mappings. The [Claude Code plugin](#claude-code-plugin) writes them from your org's code coverage or your test code, and audits them as the code changes.
+Both still require 75% coverage for each Apex class and trigger in the deployment. The cost of explicit selection is writing and maintaining the mappings. The [AI coding agent skills](#ai-coding-agent-skills) write them from your org's code coverage or your test code, and audit them as the code changes.
 
 ## Install
 
@@ -256,15 +256,28 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
 | `command`     | The formatted test list, ready to append to a Salesforce CLI deploy/validate command. |
 | `warnings`    | Newline-separated list of warnings emitted while listing tests, if any.            |
 
-## Claude Code Plugin
+## AI Coding Agent Skills
 
-Annotating an existing org by hand is the main cost of adopting this plugin. The [Claude Code](https://claude.com/claude-code) plugin in [`plugins/apex-test-list`](plugins/apex-test-list) does it for you: Claude maps each Apex class and trigger to the tests that cover it, using org code coverage when you have an org or static analysis of your test code when you don't, shows you the plan, and writes the `// @Tests:` annotations.
+Annotating an existing org by hand is the main cost of adopting this plugin. The skills in [`plugins/apex-test-list`](plugins/apex-test-list) do it for you: your AI coding agent maps each Apex class and trigger to the tests that cover it, using org code coverage when you have an org or static analysis of your test code when you don't, shows you the plan, and writes the `// @Tests:` annotations.
 
 Every mapping stays a reviewable line in your source, and `sf apextests list` shows exactly which tests a deployment will run, unlike server-side test selection.
 
-```text
+The skills are standard `SKILL.md` files, so they also work in GitHub Copilot and other AI coding agents:
+
+```sh
+# Claude Code (type these inside a Claude Code session)
 /plugin marketplace add wisefoxme/apex-test-list
 /plugin install apex-test-list@apex-test-list
+
+# GitHub Copilot CLI
+copilot plugin marketplace add wisefoxme/apex-test-list
+copilot plugin install apex-test-list@apex-test-list
+
+# Any agent, with the skills CLI (https://skills.sh)
+npx skills add wisefoxme/apex-test-list
+
+# Any agent, with the GitHub CLI
+gh skill install wisefoxme/apex-test-list --agent github-copilot
 ```
 
 | Skill            | What it does                                                                                                           |

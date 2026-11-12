@@ -23,10 +23,38 @@ and edits files only when you approve a plan.
 
 ## Install
 
-```text
-/plugin marketplace add wisefoxme/apex-test-list
-/plugin install apex-test-list@apex-test-list
-```
+The skills are standard `SKILL.md` files, so they work in Claude Code, GitHub
+Copilot, and other AI coding agents that support Agent Skills. Install them one
+of these ways:
+
+- **Claude Code**, from this repository's plugin marketplace:
+
+  ```text
+  /plugin marketplace add wisefoxme/apex-test-list
+  /plugin install apex-test-list@apex-test-list
+  ```
+
+- **GitHub Copilot CLI**, which reads the same marketplace:
+
+  ```sh
+  copilot plugin marketplace add wisefoxme/apex-test-list
+  copilot plugin install apex-test-list@apex-test-list
+  ```
+
+- **Any agent, with the [skills](https://skills.sh) CLI**. It asks which
+  agents to install into:
+
+  ```sh
+  npx skills add wisefoxme/apex-test-list
+  ```
+
+- **Any agent, with the GitHub CLI** (`gh skill`, in public preview). Pick the
+  agent with `--agent`, for example `github-copilot`, `claude-code`, `cursor`,
+  or `codex`:
+
+  ```sh
+  gh skill install wisefoxme/apex-test-list --agent github-copilot
+  ```
 
 ## Requirements
 
