@@ -1,6 +1,7 @@
 ---
 name: annotate-tests
 description: Use when the user wants to map Apex classes and triggers to the tests that cover them in a Salesforce DX project, so deployments run only the relevant tests with the apextestlist plugin (`sf apextests list`). Examples include "add @Tests annotations to our Apex classes", "which tests should run when AccountService changes", "set up test annotations for apex-test-list", "annotate the classes that have no @Tests", or "map our triggers to their tests". Proposes mappings from org code coverage (when an org is connected) or from static analysis of the test code, has the user review them, then writes `// @Tests:` comments. Unlike Salesforce's server-side RunRelevantTests, every mapping is in the source and reviewable. Needs Node.js 22.19+; the Salesforce CLI is optional.
+license: BSD-3-Clause
 ---
 
 # Annotate Apex classes with the tests that cover them

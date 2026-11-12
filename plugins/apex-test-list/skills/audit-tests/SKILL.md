@@ -1,6 +1,7 @@
 ---
 name: audit-tests
 description: Use when the user wants to check the Apex test annotations used by the apextestlist plugin (`sf apextests list`) in a Salesforce DX project, such as "which classes have no @Tests", "find stale test annotations", "check our @Tests against org coverage", "why didn't this test run in the deploy", "what tests will run for this change", or "audit .test-dependencies.yml". Reports classes without annotations, names that aren't test classes, missing suites, overly broad annotations, and differences from org code coverage, then offers fixes. Read-only unless the user approves changes. Needs Node.js 22.19+; the Salesforce CLI is optional.
+license: BSD-3-Clause
 ---
 
 # Audit Apex test annotations
