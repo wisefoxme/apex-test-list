@@ -9,8 +9,12 @@ import { getPackageDirectories } from '../utils/getPackageDirectories.js';
 import { SfdxProject } from '../utils/types.js';
 import { ApexFile, Coverage, MapError, MapOptions, Project, Suite } from './types.js';
 
-const DML_REGEX =
-  /\b(insert|update|upsert|delete|undelete|merge)\b|\bdatabase\s*\.\s*(insert|update|upsert|delete|undelete|merge)/i;
+// Also matches Database.insert(...) and friends: the word boundary after the dot still applies.
+const DML_REGEX = /\b(insert|update|upsert|delete|undelete|merge)\b/i;
+
+// A line comment (up to the newline), a block comment (to `*/` or the end),
+// or a single-quoted string with backslash escapes (to the closing quote or the end).
+const COMMENT_OR_STRING = /\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)|'(?:\\[\s\S]|[^'\\])*(?:'|$)/g;
 
 export function stripBom(text: string): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
@@ -22,44 +26,17 @@ export function normalizePath(path: string): string {
 
 /** Removes comments and string literals so only code identifiers remain. */
 export function stripCommentsAndStrings(src: string): string {
-  let out = '';
-  let i = 0;
-  while (i < src.length) {
-    const c = src[i];
-    const n = src[i + 1];
-    if (c === '/' && n === '/') {
-      while (i < src.length && src[i] !== '\n') i++;
-    } else if (c === '/' && n === '*') {
-      i += 2;
-      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++;
-      i += 2;
-      out += ' ';
-    } else if (c === "'") {
-      i++;
-      while (i < src.length && src[i] !== "'") i += src[i] === '\\' ? 2 : 1;
-      i++;
-      out += "''";
-    } else {
-      out += c;
-      i++;
-    }
-  }
-  return out;
+  // A block comment becomes a space so the code on either side stays two words; a string becomes ''.
+  return src.replace(COMMENT_OR_STRING, (match) => (match.startsWith("'") ? "''" : match.startsWith('/*') ? ' ' : ''));
 }
 
 /**
  * Reads `@Tests:` or `@TestSuites:` names the way apextestlist does: the
- * plugin's own regex, names separated by commas and/or whitespace.
+ * plugin's own regex, names separated by commas and/or whitespace. A `*` (the
+ * end of a block comment on the same line) is not part of a name.
  */
 export function parseAnnotation(raw: string, regex: RegExp): string[] {
-  const names: string[] = [];
-  for (const match of raw.matchAll(new RegExp(regex.source, 'gi'))) {
-    for (const name of match[1].split(/[,\s]+/)) {
-      const clean = name.replace(/\*/g, '').trim();
-      if (clean) names.push(clean);
-    }
-  }
-  return names;
+  return Array.from(raw.matchAll(new RegExp(regex.source, 'gi')), (match) => match[1].match(/[^,\s*]+/g) ?? []).flat();
 }
 
 export function parseTests(raw: string): string[] {
@@ -131,7 +108,8 @@ export async function loadProject(opts: Pick<MapOptions, 'project' | 'ignore'>):
     throw new MapError(`Cannot read the Salesforce DX project: ${(error as Error).message}`, { cause: error });
   }
   const root = found.repoRoot;
-  const files = (await Promise.all(found.metadataPaths.map(listFiles))).flat().sort();
+  // A package directory listed twice in sfdx-project.json (`vendor` and `vendor/`) yields the same files twice.
+  const files = [...new Set((await Promise.all(found.metadataPaths.map(listFiles))).flat())].sort();
   const apex = await Promise.all(
     files.filter((f) => f.endsWith('.cls') || f.endsWith('.trigger')).map((f) => readApexFile(f, root)),
   );
@@ -170,8 +148,7 @@ export async function loadCoverage(file: string | undefined): Promise<Coverage |
     const test = record?.ApexTestClass?.Name;
     if (!target || !test) continue;
     const key = target.toLowerCase();
-    if (!map.has(key)) map.set(key, new Set());
-    map.get(key)?.add(test);
+    map.set(key, (map.get(key) ?? new Set<string>()).add(test));
   }
   return map;
 }

@@ -14,8 +14,8 @@ const TEMPLATE_PLACEHOLDERS = new Set(['name', 'kind', 'tests', 'suites']);
 function checkTemplate(lines: string[]): { problems: string[]; type: HeaderTemplate['type'] | null } {
   const problems: string[] = [];
   const nonBlank = lines.filter((l) => l.trim());
-  if (!nonBlank.length) problems.push('it is empty');
-  const first = nonBlank[0]?.trim() ?? '';
+  if (!nonBlank.length) return { problems: ['it is empty'], type: null };
+  const first = nonBlank[0].trim();
   const type = first.startsWith('/*') ? 'block' : first.startsWith('//') ? 'line' : null;
   if (!type) problems.push('it must start with a /* or // comment');
 

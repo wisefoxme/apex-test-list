@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { METADATA_FILTER_CONFIG } from '../utils/constants.js';
 import { matchWildcard } from '../utils/matchWildcard.js';
 import { parseYaml } from '../utils/yamlParser.js';
-import { findLeadingHeader } from './header.js';
+import { findLeadingHeader, isInHeader } from './header.js';
 import { loadCoverage, loadProject, stripBom } from './project.js';
 import { HeaderTemplate, loadTemplate } from './template.js';
 import { ApexFile, Coverage, Io, MapOptions, Project, Suite } from './types.js';
@@ -39,7 +39,8 @@ export type AuditResult = {
 
 /** Suite entries match test names the way apextestlist does, ignoring a namespace prefix. */
 function suiteEntryMatches(entry: string, test: string): boolean {
-  const bare = entry.includes('.') ? entry.slice(entry.lastIndexOf('.') + 1) : entry;
+  // Without a dot, lastIndexOf is -1 and the slice keeps the whole name.
+  const bare = entry.slice(entry.lastIndexOf('.') + 1);
   return bare.includes('*') ? matchWildcard(bare, test) : bare.toLowerCase() === test.toLowerCase();
 }
 
@@ -55,7 +56,10 @@ function coverageGaps(targets: ApexFile[], coverage: Coverage, suiteByLower: Map
     }
     const coveredLower = new Set([...covered].map((c) => c.toLowerCase()));
     const annotatedLower = new Set(t.tests.map((c) => c.toLowerCase()));
-    const viaSuites = t.suites.flatMap((s) => suiteByLower.get(s.toLowerCase())?.classes ?? []);
+    const suiteNames = new Set(t.suites.map((s) => s.toLowerCase()));
+    const viaSuites = [...suiteByLower.values()]
+      .filter((s) => suiteNames.has(s.name.toLowerCase()))
+      .flatMap((s) => s.classes);
     const isSelected = (test: string): boolean =>
       annotatedLower.has(test.toLowerCase()) || viaSuites.some((entry) => suiteEntryMatches(entry, test));
     const missing = [...covered].filter((c) => !isSelected(c)).sort();
@@ -114,7 +118,7 @@ async function headerProblems(targets: ApexFile[], template: HeaderTemplate): Pr
         file: t.file,
         issue: `header is a ${header.type} comment; the template uses a ${template.type} comment`,
       });
-    } else if (first < header.start || first >= header.end) {
+    } else if (!isInHeader(header, first)) {
       problems.push({ file: t.file, issue: 'annotation is outside the leading header' });
     }
   }

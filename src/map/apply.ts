@@ -2,6 +2,7 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 
+import { TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
 import { Insert, insertAnnotations, mergeExisting } from './header.js';
 import { loadProject, stripBom } from './project.js';
 import { loadTemplate } from './template.js';
@@ -69,7 +70,8 @@ function checkEntry(
       return `${rawKey}: not found locally: ${[...unknownTests, ...unknownSuites].join(', ')} (use --allow-unknown for tests that only exist in the org)`;
     }
   }
-  return { target, tests, suites };
+  // Write local test classes with their own capitalization; org-only names stay as given.
+  return { target, tests: tests.map((t) => project.testsByLower.get(t.toLowerCase())?.name ?? t), suites };
 }
 
 function formatReport(report: FileReport[], dryRun: boolean): string {
@@ -114,16 +116,18 @@ export async function apply(opts: MapOptions, io: Io): Promise<void> {
     const bom = original.charCodeAt(0) === 0xfeff ? '﻿' : '';
     const eol = original.includes('\r\n') ? '\r\n' : '\n';
     let content = stripBom(original);
-    const t = mergeExisting(content, '@Tests', tests);
+    const t = mergeExisting(content, TEST_NAME_REGEX, tests);
     content = t.content;
-    const s = mergeExisting(content, '@TestSuites', suites);
+    const s = mergeExisting(content, TEST_SUITE_NAME_REGEX, suites);
     content = s.content;
     const inserts: Insert[] = [];
     if (t.pending.length) inserts.push({ label: '@Tests', names: t.pending });
     if (s.pending.length) inserts.push({ label: '@TestSuites', names: s.pending });
+    // Stryker disable next-line ConditionalExpression: with nothing to insert, the content only changes when no name
+    // was added, and then `changed` is false and the file isn't written.
     if (inserts.length) content = insertAnnotations(content, inserts, eol, template, target);
     const changed = t.added.length > 0 || s.added.length > 0;
-    if (changed && !opts.dryRun) await writeFile(target.path, bom + content, 'utf8');
+    if (changed && !opts.dryRun) await writeFile(target.path, bom + content);
     report.push({ file: target.file, addedTests: t.added, addedSuites: s.added, changed });
   }
 

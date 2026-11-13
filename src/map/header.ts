@@ -1,6 +1,5 @@
 'use strict';
 
-import { TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
 import { parseAnnotation } from './project.js';
 import { HeaderTemplate, renderTemplate } from './template.js';
 import { ApexFile } from './types.js';
@@ -9,11 +8,12 @@ export type AnnotationLabel = '@Tests' | '@TestSuites';
 
 export type Insert = { label: AnnotationLabel; names: string[] };
 
-export type Header =
-  | { type: 'block'; start: number; end: number; close: number }
-  | { type: 'line'; start: number; end: number };
+/** A block header ends at its `*\/` (`close`); a line header ends after its last `//` line (`end`). */
+export type Header = { type: 'block'; start: number; close: number } | { type: 'line'; start: number; end: number };
 
 const ANNOTATION_LINE_PREFIX = /^[ \t]*(\/\/|\*)[ \t]*$/;
+
+const LEADING_LINE_COMMENTS = /^\s*(?:[ \t]*\/\/[^\n]*(?:\n|$))+/;
 
 function joinNames(names: string[]): string {
   return names.join(', ');
@@ -24,15 +24,14 @@ function annotationLines(prefix: string, inserts: Insert[], eol: string): string
 }
 
 /**
- * Adds names to the first existing annotation of this kind. When the file has
- * none, returns the names as `pending` so the caller can insert a new line.
+ * Adds names to the first existing annotation that `regex` finds. When the file
+ * has none, returns the new names as `pending` so the caller can insert a line.
  */
 export function mergeExisting(
   content: string,
-  label: AnnotationLabel,
+  regex: RegExp,
   names: string[],
 ): { content: string; added: string[]; pending: string[] } {
-  const regex = label === '@Tests' ? TEST_NAME_REGEX : TEST_SUITE_NAME_REGEX;
   const existing = parseAnnotation(content, regex);
   const seen = new Set(existing.map((n) => n.toLowerCase()));
   const added = names.filter((n) => {
@@ -41,6 +40,7 @@ export function mergeExisting(
     seen.add(key);
     return true;
   });
+  // Nothing new: leave the annotation exactly as written, even if it isn't comma-separated.
   if (!added.length) return { content, added, pending: [] };
 
   const first = new RegExp(regex.source, 'i').exec(content);
@@ -59,35 +59,35 @@ export function mergeExisting(
 
 /** Finds a leading `/* ... *\/` or `//` comment block before any code. */
 export function findLeadingHeader(content: string): Header | null {
-  const lead = content.length - content.trimStart().length;
-  const lineStart = content.lastIndexOf('\n', lead - 1) + 1;
-  if (content.startsWith('/*', lead)) {
-    const close = content.indexOf('*/', lead + 2);
-    if (close === -1) return null;
-    return { type: 'block', start: lead, end: close + 2, close };
+  const start = content.length - content.trimStart().length;
+  if (content.startsWith('/*', start)) {
+    // Search after the opening `/*`, so `/*/` doesn't count as a close.
+    const close = content.indexOf('*/', start + 2);
+    return close === -1 ? null : { type: 'block', start, close };
   }
-  if (content.startsWith('//', lead)) {
-    // The text from lineStart starts with optional indentation and `//`, so this always matches.
-    const match = /^(?:[ \t]*\/\/[^\n]*(?:\n|$))+/.exec(content.slice(lineStart)) as RegExpExecArray;
-    return { type: 'line', start: lead, end: lineStart + match[0].length };
-  }
-  return null;
+  const lines = LEADING_LINE_COMMENTS.exec(content);
+  return lines ? { type: 'line', start, end: lines[0].length } : null;
+}
+
+/** Whether a position falls inside the header comment. */
+export function isInHeader(header: Header, position: number): boolean {
+  return position < (header.type === 'block' ? header.close : header.end);
 }
 
 /** Inserts annotation lines inside an existing header; returns null if the header can't take them cleanly. */
 function insertIntoHeader(content: string, header: Header, inserts: Insert[], eol: string): string | null {
   if (header.type === 'line') {
-    const atEnd = header.end === content.length && !content.endsWith('\n');
-    const insertion = (atEnd ? eol : '') + annotationLines('// ', inserts, eol);
+    // A file that ends inside its comment block needs a line break before the new lines.
+    const needsBreak = !content.slice(0, header.end).endsWith('\n');
+    const insertion = (needsBreak ? eol : '') + annotationLines('// ', inserts, eol);
     return content.slice(0, header.end) + insertion + content.slice(header.end);
   }
-  const close = header.close;
-  const closeLineStart = content.lastIndexOf('\n', close - 1) + 1;
-  // A one-line block, or text before `*/` on its closing line, has no clean place for a new line.
-  if (closeLineStart <= header.start || content.slice(closeLineStart, close).trim()) return null;
-  const prevLineStart = content.lastIndexOf('\n', closeLineStart - 2) + 1;
-  const prevPrefix = /^([ \t]*\*)(?!\/)/.exec(content.slice(prevLineStart, closeLineStart));
-  const prefix = prevPrefix ? `${prevPrefix[1]} ` : `${content.slice(closeLineStart, close)}* `;
+  const closeLineStart = content.lastIndexOf('\n', header.close) + 1;
+  // Text before `*/` on its line (including a one-line `/* ... */`) leaves no clean place for a new line.
+  if (content.slice(closeLineStart, header.close).trim()) return null;
+  const prevLine = content.slice(content.lastIndexOf('\n', closeLineStart - 2) + 1, closeLineStart);
+  const prevPrefix = /^([ \t]*\*)(?!\/)/.exec(prevLine);
+  const prefix = prevPrefix ? `${prevPrefix[1]} ` : `${content.slice(closeLineStart, header.close)}* `;
   return content.slice(0, closeLineStart) + annotationLines(prefix, inserts, eol) + content.slice(closeLineStart);
 }
 
@@ -95,13 +95,11 @@ function insertIntoHeader(content: string, header: Header, inserts: Insert[], eo
 function insertNextToAnnotation(content: string, inserts: Insert[], eol: string): string | null {
   const match = /@(tests|testsuites)\s*:/i.exec(content);
   if (!match) return null;
-  const lineStart = content.lastIndexOf('\n', match.index - 1) + 1;
-  const prefix = content.slice(lineStart, match.index);
+  const prefix = content.slice(content.lastIndexOf('\n', match.index) + 1, match.index);
   if (!ANNOTATION_LINE_PREFIX.test(prefix)) return null;
   const lineEnd = content.indexOf('\n', match.index);
-  const insertAt = lineEnd === -1 ? content.length : lineEnd + 1;
-  const lead = lineEnd === -1 ? eol : '';
-  return content.slice(0, insertAt) + lead + annotationLines(prefix, inserts, eol) + content.slice(insertAt);
+  if (lineEnd === -1) return `${content}${eol}${annotationLines(prefix, inserts, eol)}`;
+  return content.slice(0, lineEnd + 1) + annotationLines(prefix, inserts, eol) + content.slice(lineEnd + 1);
 }
 
 /**
@@ -120,14 +118,13 @@ export function insertAnnotations(
   if (nextTo !== null) return nextTo;
   if (template) {
     const header = findLeadingHeader(content);
-    if (header) {
-      const inHeader = insertIntoHeader(content, header, inserts, eol);
-      if (inHeader !== null) return inHeader;
-    } else {
+    if (!header) {
       const values = { name: target.name, kind: target.kind, tests: '', suites: '' };
       for (const i of inserts) values[i.label === '@Tests' ? 'tests' : 'suites'] = joinNames(i.names);
       return renderTemplate(template, values, eol) + content;
     }
+    const inHeader = insertIntoHeader(content, header, inserts, eol);
+    if (inHeader !== null) return inHeader;
   }
   return annotationLines('// ', inserts, eol) + content;
 }

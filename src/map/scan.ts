@@ -67,24 +67,16 @@ export function scanTarget(
   maxTests: number,
 ): ScanTarget {
   const proposals = directProposals(target, project, coverage);
-  const result: ScanTarget = {
-    name: target.name,
-    kind: target.kind,
-    file: target.file,
-    existing: { tests: target.tests, suites: target.suites },
-    proposed: [],
-    missingLocally: [],
-    broad: false,
-  };
+  const trigger: Pick<ScanTarget, 'sObject' | 'handlers' | 'dmlCandidates'> = {};
 
   if (target.kind === 'trigger') {
-    result.sObject = target.sObject;
+    trigger.sObject = target.sObject;
     // Tests of the handler classes the trigger calls.
     const handlers = [...target.tokens].flatMap((t) => {
       const cls = project.classesByLower.get(t);
       return cls && !cls.isTest ? [cls] : [];
     });
-    result.handlers = handlers.map((h) => h.name);
+    trigger.handlers = handlers.map((h) => h.name);
     for (const handler of handlers) {
       for (const p of directProposals(handler, project, null).values()) addProposal(proposals, p.test, 'handler');
     }
@@ -92,16 +84,21 @@ export function scanTarget(
     if (target.sObject) {
       const so = target.sObject.toLowerCase();
       const dml = project.tests.filter((t) => t.hasDml && t.tokens.has(so) && !proposals.has(t.name.toLowerCase()));
-      result.dmlCandidates = { count: dml.length, sample: dml.slice(0, 25).map((t) => t.name) };
+      trigger.dmlCandidates = { count: dml.length, sample: dml.slice(0, 25).map((t) => t.name) };
     }
   }
 
-  result.proposed = [...proposals.values()].sort((a, b) => rank(a) - rank(b) || a.test.localeCompare(b.test));
-  result.missingLocally = result.proposed
-    .filter((p) => !project.testsByLower.has(p.test.toLowerCase()))
-    .map((p) => p.test);
-  result.broad = result.proposed.length > maxTests;
-  return result;
+  const proposed = [...proposals.values()].sort((a, b) => rank(a) - rank(b) || a.test.localeCompare(b.test));
+  return {
+    name: target.name,
+    kind: target.kind,
+    file: target.file,
+    existing: { tests: target.tests, suites: target.suites },
+    ...trigger,
+    proposed,
+    missingLocally: proposed.filter((p) => !project.testsByLower.has(p.test.toLowerCase())).map((p) => p.test),
+    broad: proposed.length > maxTests,
+  };
 }
 
 function formatTarget(r: ScanTarget, maxTests: number): string[] {
