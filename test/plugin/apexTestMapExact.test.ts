@@ -707,19 +707,22 @@ describe('apply output', () => {
 
 describe('list output', () => {
   it('prints tests, deploy flags, and warnings exactly', async () => {
-    expect((await run('list')).stdout).toMatchInlineSnapshot(`
+    // apextestlist's warnings name files with the platform's path separator.
+    const slashes = (text: string): string => text.replace(/\\/g, '/');
+    expect(slashes((await run('list')).stdout)).toMatchInlineSnapshot(`
       "Tests (13): alphatest, AlphaTest, ARefTest, Beta_Test, Beta_Tests, BetaTest, BetaTests, DmlTest, MentionTest, NS.AlphaTest, Test_Beta, TestBeta, ZRefTest
       Deploy flags: --tests alphatest --tests AlphaTest --tests ARefTest --tests Beta_Test --tests Beta_Tests --tests BetaTest --tests BetaTests --tests DmlTest --tests MentionTest --tests NS.AlphaTest --tests Test_Beta --tests TestBeta --tests ZRefTest
       Warnings (6):
         File "Vendor.cls" does not contain @tests, @testsuites, or @istest annotations
         File "Beta.cls" does not contain @tests, @testsuites, or @istest annotations
-        File "sub\\Deep.cls" does not contain @tests, @testsuites, or @istest annotations
+        File "sub/Deep.cls" does not contain @tests, @testsuites, or @istest annotations
         File "AlphaTrigger.trigger" does not contain @tests, @testsuites, or @istest annotations
         File "Beta.trigger" does not contain @tests, @testsuites, or @istest annotations
         File "Vendor.cls" does not contain @tests, @testsuites, or @istest annotations
       "
     `);
-    expect(await json('list')).toMatchInlineSnapshot(`
+    const listed = await json<{ warnings: string[] }>('list');
+    expect({ ...listed, warnings: listed.warnings.map(slashes) }).toMatchInlineSnapshot(`
       {
         "command": "--tests alphatest --tests AlphaTest --tests ARefTest --tests Beta_Test --tests Beta_Tests --tests BetaTest --tests BetaTests --tests DmlTest --tests MentionTest --tests NS.AlphaTest --tests Test_Beta --tests TestBeta --tests ZRefTest",
         "tests": [
@@ -740,7 +743,7 @@ describe('list output', () => {
         "warnings": [
           "File "Vendor.cls" does not contain @tests, @testsuites, or @istest annotations",
           "File "Beta.cls" does not contain @tests, @testsuites, or @istest annotations",
-          "File "sub\\Deep.cls" does not contain @tests, @testsuites, or @istest annotations",
+          "File "sub/Deep.cls" does not contain @tests, @testsuites, or @istest annotations",
           "File "AlphaTrigger.trigger" does not contain @tests, @testsuites, or @istest annotations",
           "File "Beta.trigger" does not contain @tests, @testsuites, or @istest annotations",
           "File "Vendor.cls" does not contain @tests, @testsuites, or @istest annotations",
