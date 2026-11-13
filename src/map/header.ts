@@ -1,5 +1,6 @@
 'use strict';
 
+import { TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../utils/constants.js';
 import { parseAnnotation } from './project.js';
 import { HeaderTemplate, renderTemplate } from './template.js';
 import { ApexFile } from './types.js';
@@ -24,16 +25,28 @@ function annotationLines(prefix: string, inserts: Insert[], eol: string): string
 }
 
 /**
- * Adds names to the first existing annotation that `regex` finds. When the file
- * has none, returns the new names as `pending` so the caller can insert a line.
+ * Each annotation as apextestlist reads it (`read`), and the same annotation
+ * confined to one line, names optional (`line`). apextestlist's `\s*` can run
+ * past the end of an empty `// @Tests:` line and read the next line as names,
+ * so edits only ever touch the annotation's own line.
+ */
+const ANNOTATIONS: Record<AnnotationLabel, { read: RegExp; line: RegExp }> = {
+  '@Tests': { read: TEST_NAME_REGEX, line: /@tests[ \t]*:[ \t]*([^/\n]*)/i },
+  '@TestSuites': { read: TEST_SUITE_NAME_REGEX, line: /@testsuites[ \t]*:[ \t]*([^/\n]*)/i },
+};
+
+/**
+ * Adds names to the first annotation line of this kind, filling it in when it's
+ * empty. When the file has none, returns the new names as `pending` so the
+ * caller can insert a line.
  */
 export function mergeExisting(
   content: string,
-  regex: RegExp,
+  label: AnnotationLabel,
   names: string[],
 ): { content: string; added: string[]; pending: string[] } {
-  const existing = parseAnnotation(content, regex);
-  const seen = new Set(existing.map((n) => n.toLowerCase()));
+  const { read, line } = ANNOTATIONS[label];
+  const seen = new Set(parseAnnotation(content, read).map((n) => n.toLowerCase()));
   const added = names.filter((n) => {
     const key = n.toLowerCase();
     if (seen.has(key)) return false;
@@ -43,15 +56,18 @@ export function mergeExisting(
   // Nothing new: leave the annotation exactly as written, even if it isn't comma-separated.
   if (!added.length) return { content, added, pending: [] };
 
-  const first = new RegExp(regex.source, 'i').exec(content);
+  const first = line.exec(content);
   if (!first) return { content, added, pending: added };
   const captured = first[1];
-  const trailing = captured.slice(captured.replace(/[\s*]+$/, '').length);
+  const kept = captured.replace(/[\s*]+$/, '');
   const start = first.index + first[0].length - captured.length;
-  const merged = joinNames([...existing, ...added]);
-  // Later lines of the same annotation are still read by apextestlist; their names are now on the first line too.
+  // `@Tests:` with nothing after the colon gets a space before the names.
+  const space = content[start - 1] === ':' ? ' ' : '';
+  const merged = joinNames([...(kept.match(/[^,\s*]+/g) ?? []), ...added]);
+  // Other annotation lines are still read by apextestlist and stay as they are.
   return {
-    content: content.slice(0, start) + merged + trailing + content.slice(start + captured.length),
+    content:
+      content.slice(0, start) + space + merged + captured.slice(kept.length) + content.slice(start + captured.length),
     added,
     pending: [],
   };

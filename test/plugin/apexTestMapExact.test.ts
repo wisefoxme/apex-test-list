@@ -873,18 +873,35 @@ describe('internals', () => {
     expect(parseAnnotation('// @TestSuites: S1', TEST_SUITE_NAME_REGEX)).toEqual(['S1']);
   });
 
+  it('fills in an empty annotation on its own line, without touching the next line', () => {
+    const merge = (content: string, names: string[]): string => mergeExisting(content, '@Tests', names).content;
+    expect(merge('// @Tests:\n// note\npublic class X {}', ['A'])).toBe('// @Tests: A\n// note\npublic class X {}');
+    expect(merge('// @Tests:\npublic class X {}', ['A', 'B'])).toBe('// @Tests: A, B\npublic class X {}');
+    expect(merge('// @Tests:\r\npublic class X {}\r\n', ['A'])).toBe('// @Tests: A\r\npublic class X {}\r\n');
+    expect(merge('// @Tests: \npublic class X {}', ['A'])).toBe('// @Tests: A\npublic class X {}');
+    expect(merge('// @Tests:A\n', ['B'])).toBe('// @Tests: A, B\n');
+    expect(merge('// @Tests :\n', ['A'])).toBe('// @Tests : A\n');
+    expect(mergeExisting('// @TestSuites\t:\n', '@TestSuites', ['S']).content).toBe('// @TestSuites\t: S\n');
+    expect(merge('// @Tests: A\n// @Tests: B\n', ['C'])).toBe('// @Tests: A, C\n// @Tests: B\n');
+    expect(mergeExisting('// @TestSuites:\n// @Tests: A\n', '@TestSuites', ['S'])).toEqual({
+      content: '// @TestSuites: S\n// @Tests: A\n',
+      added: ['S'],
+      pending: [],
+    });
+  });
+
   it('merges names into the first annotation, keeping a closing */', () => {
-    expect(mergeExisting('/* @Tests: A, B */\nclass X {}', TEST_NAME_REGEX, ['C', 'c', 'A'])).toEqual({
+    expect(mergeExisting('/* @Tests: A, B */\nclass X {}', '@Tests', ['C', 'c', 'A'])).toEqual({
       content: '/* @Tests: A, B, C */\nclass X {}',
       added: ['C'],
       pending: [],
     });
-    expect(mergeExisting('// @Tests: A,B\n', TEST_NAME_REGEX, ['a'])).toEqual({
+    expect(mergeExisting('// @Tests: A,B\n', '@Tests', ['a'])).toEqual({
       content: '// @Tests: A,B\n',
       added: [],
       pending: [],
     });
-    expect(mergeExisting('class X {}', TEST_NAME_REGEX, ['A', 'A'])).toEqual({
+    expect(mergeExisting('class X {}', '@Tests', ['A', 'A'])).toEqual({
       content: 'class X {}',
       added: ['A'],
       pending: ['A'],
