@@ -156,6 +156,23 @@ describe('apextests list', () => {
     expect(result.manifestHasApex).to.equal(false);
   });
 
+  it('reports manifestHasApex as false for a manifest with only non-Apex members', async () => {
+    const result = await listTests({
+      manifest: 'samples/metadataFilterPackage.xml',
+      ignoreDirs: [ignoreDir],
+    });
+    expect(result.manifestHasApex).to.equal(false);
+  });
+
+  it('reports manifestHasApex for a manifest whose only Apex is a trigger', async () => {
+    const result = await listTests({
+      manifest: 'samples/samplePackageTriggerOnly.xml',
+      ignoreDirs: [ignoreDir],
+    });
+    expect(result.manifestHasApex).to.equal(true);
+    expect(result.tests).toEqual(['SampleTriggerTest']);
+  });
+
   it('runs list --manifest samples/samplePackage.xml reports manifestHasApex', async () => {
     const result = await listTests({
       manifest: 'samples/samplePackage.xml',

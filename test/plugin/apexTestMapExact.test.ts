@@ -6,7 +6,13 @@ import { apply } from '../../src/map/apply.js';
 import { main, parseArgs } from '../../src/map/cli.js';
 import { findLeadingHeader, isInHeader, mergeExisting } from '../../src/map/header.js';
 import { list } from '../../src/map/list.js';
-import { loadCoverage, loadProject, parseAnnotation, stripCommentsAndStrings } from '../../src/map/project.js';
+import {
+  loadCoverage,
+  loadProject,
+  normalizePath,
+  parseAnnotation,
+  stripCommentsAndStrings,
+} from '../../src/map/project.js';
 import { loadTemplate } from '../../src/map/template.js';
 import { MapError } from '../../src/map/types.js';
 import { TEST_NAME_REGEX, TEST_SUITE_NAME_REGEX } from '../../src/utils/constants.js';
@@ -848,6 +854,10 @@ describe('cli', () => {
 });
 
 describe('internals', () => {
+  it('uses forward slashes in paths on every platform', () => {
+    expect(normalizePath('force-app\\main\\default\\classes\\A.cls')).toBe('force-app/main/default/classes/A.cls');
+  });
+
   it('strips comments and strings but keeps code', () => {
     expect(stripCommentsAndStrings("a // x 'q'\nb /* 1 */c/* 2\n*/d 'it\\'s' e 'x' f")).toBe("a \nb  c d '' e '' f");
     expect(stripCommentsAndStrings('a /* unclosed\nb')).toBe('a  ');

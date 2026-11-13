@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { availableParallelism, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, parse } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getConcurrencyThreshold } from '../../src/utils/concurrencyThreshold.js';
 import { createQueue } from '../../src/utils/concurrentQueue.js';
@@ -30,6 +30,13 @@ describe('getRepoRoot', () => {
   it('throws when no sfdx-project.json found in any parent directory', async () => {
     vi.spyOn(process, 'cwd').mockReturnValue('C:\\definitely-no-sfdx-project-json-here\\deep\\path');
     await expect(getRepoRoot()).rejects.toThrow('sfdx-project.json not found in any parent directory.');
+  });
+
+  it('starts from the given folder and keeps the last lookup error as the cause', async () => {
+    await expect(getRepoRoot(parse(tmpdir()).root)).rejects.toMatchObject({
+      message: 'sfdx-project.json not found in any parent directory.',
+      cause: expect.objectContaining({ code: 'ENOENT' }),
+    });
   });
 
   it('finds sfdx-project.json by traversing parent directories', async () => {

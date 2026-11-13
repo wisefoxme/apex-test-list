@@ -13,6 +13,7 @@ export async function listTests({
   format = 'sf',
   manifest,
   ignoreMissingTests = false,
+  // Stryker disable next-line ArrayDeclaration: a non-empty default only ignores a package directory with that exact name
   ignoreDirs = [],
   noWarnings = false,
   filterByMetadata = false,
@@ -32,7 +33,7 @@ export async function listTests({
   if (manifest) {
     const manifestMetadata = await extractTypeNamesFromManifestFile(manifest);
     manifestHasApex = manifestMetadata.some((name) => name.startsWith('ApexClass:') || name.startsWith('ApexTrigger:'));
-    testClassesNames = manifestMetadata.filter((name) => !name.endsWith('testSuite-meta.xml'));
+    testClassesNames = manifestMetadata;
     if (filterByMetadata) {
       const ymlConfigPath = resolve(repoRoot, METADATA_FILTER_CONFIG);
       const testMap = await loadTestMetadataDependencies(ymlConfigPath);
