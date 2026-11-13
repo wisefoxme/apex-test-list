@@ -75,13 +75,18 @@ rows, say the data looks stale rather than reporting each one.
 For "which tests will run for this change" or "why didn't X run":
 
 1. Build the manifest the pipeline uses (often sfdx-git-delta:
-   `sf sgd source delta --from <base> --to HEAD --output-dir <temp folder>`),
-   or list the changed `.cls` and `.trigger` files from `git diff --name-only <base>`.
-2. If the plugin is installed, run
-   `sf apextests list --manifest <temp folder>/package/package.xml --ignore-missing-tests`
-   and show the output and its warnings. Otherwise read the annotations of the
-   changed files with `npx -y -p apextestlist@1 apex-test-map scan --only Name1,Name2` and list the union of their
-   `existing` tests, plus any changed test classes.
+   `sf sgd source delta --from <base> --to HEAD --output-dir <temp folder>`).
+   Without one, write a `package.xml` in a temporary folder listing the changed
+   classes and triggers from `git diff --name-only <base>`.
+2. Run the same selection `sf apextests list` makes, without the Salesforce CLI:
+
+   ```bash
+   npx -y -p apextestlist@1 apex-test-map list --manifest <temp folder>/package/package.xml --ignore-missing-tests
+   ```
+
+   Show the tests, the deploy flags, and the warnings. Add
+   `--filter-by-metadata` if the pipeline selects tests from
+   `.test-dependencies.yml`.
 3. For a test that didn't run, point to the missing link: no annotation on the
    changed class, a misspelled name, or a suite that doesn't list it.
 

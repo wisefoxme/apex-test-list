@@ -27,6 +27,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
 - [GitHub Action](#github-action)
 - [AI Coding Agent Skills](#ai-coding-agent-skills)
+- [Programmatic Use](#programmatic-use)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
 - [License](#license)
@@ -286,6 +287,22 @@ gh skill install wisefoxme/apex-test-list --agent github-copilot
 | `audit-tests`    | Finds unannotated classes, unknown or non-test names, missing suites, broad annotations, and drift from org coverage.  |
 
 See the [plugin README](plugins/apex-test-list/README.md) for requirements and data handling.
+
+## Programmatic Use
+
+The npm package also works without the Salesforce CLI, from Node.js 22.19 or newer:
+
+```ts
+import { listTests } from 'apextestlist';
+
+const { tests, command } = await listTests({
+  manifest: 'package/package.xml',
+  ignoreMissingTests: true,
+  projectDir: 'path/to/sfdx-project', // defaults to the current directory
+});
+```
+
+`listTests` takes the same options as `sf apextests list` and returns the selected test names plus the formatted `--tests` flags. The package also installs an `apex-test-map` command (`npx -p apextestlist apex-test-map --help`) that the AI coding agent skills use to propose, write, audit, and list test mappings.
 
 ## Command Reference
 

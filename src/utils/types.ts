@@ -24,6 +24,8 @@ export type ListTestsOptions = {
   noWarnings?: boolean;
   filterByMetadata?: boolean;
   warn?: (msg: string) => void;
+  /** Folder inside the Salesforce DX project; defaults to the current working directory. */
+  projectDir?: string;
 };
 
 export type TestMetadataMap = Record<string, string[]>;

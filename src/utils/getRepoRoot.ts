@@ -21,7 +21,12 @@ async function findRepoRoot(dir: string): Promise<{ repoRoot: string; dxConfigFi
   }
 }
 
-export async function getRepoRoot(): Promise<{ repoRoot: string; dxConfigFilePath: string }> {
-  const currentDir = process.cwd();
-  return findRepoRoot(currentDir);
+/**
+ * Finds the Salesforce DX project root: the nearest folder, from `startDir`
+ * upwards, that contains sfdx-project.json.
+ *
+ * @param startDir folder to start from; defaults to the current working directory
+ */
+export async function getRepoRoot(startDir?: string): Promise<{ repoRoot: string; dxConfigFilePath: string }> {
+  return findRepoRoot(startDir ?? process.cwd());
 }

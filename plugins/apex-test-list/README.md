@@ -61,8 +61,8 @@ of these ways:
 - Node.js 22.19 or newer
 - A Salesforce DX project (a folder with `sfdx-project.json`)
 - Optional: the Salesforce CLI with an authorized org, for coverage-based
-  mappings, and the `apextestlist` plugin (`sf plugins install apextestlist`)
-  to check the result with `sf apextests list`
+  mappings. Checking which tests a change selects (`apex-test-map list`) needs
+  neither the Salesforce CLI nor the `apextestlist` plugin.
 
 ## Try it
 

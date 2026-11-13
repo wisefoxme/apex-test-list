@@ -8,8 +8,9 @@ import { SfdxProject } from './types.js';
 
 export async function getPackageDirectories(
   ignoreDirs: string[],
+  startDir?: string,
 ): Promise<{ metadataPaths: string[]; repoRoot: string }> {
-  const { repoRoot, dxConfigFilePath } = await getRepoRoot();
+  const { repoRoot, dxConfigFilePath } = await getRepoRoot(startDir);
 
   const sfdxProjectRaw: string = await readFile(dxConfigFilePath, 'utf-8');
   const sfdxProject: SfdxProject = JSON.parse(sfdxProjectRaw) as SfdxProject;

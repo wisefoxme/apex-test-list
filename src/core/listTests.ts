@@ -16,6 +16,7 @@ export async function listTests({
   ignoreDirs = [],
   noWarnings = false,
   filterByMetadata = false,
+  projectDir,
   warn = (): void => {
     // no-op default
   },
@@ -26,7 +27,7 @@ export async function listTests({
   const warnings: string[] = [];
   let manifestHasApex = false;
 
-  const { metadataPaths: packageDirectories, repoRoot } = await getPackageDirectories(ignoreDirs);
+  const { metadataPaths: packageDirectories, repoRoot } = await getPackageDirectories(ignoreDirs, projectDir);
 
   if (manifest) {
     const manifestMetadata = await extractTypeNamesFromManifestFile(manifest);

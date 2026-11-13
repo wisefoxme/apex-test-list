@@ -194,9 +194,9 @@ endings. Running it twice changes nothing.
 ## Step 6: Verify
 
 1. Run `npx -y -p apextestlist@1 apex-test-map audit` and fix anything it reports about the new annotations.
-2. If the Salesforce CLI and the plugin are installed (`sf plugins inspect apextestlist`),
-   run `sf apextests list --ignore-missing-tests` and show the user the list it
-   produces. Don't install the plugin yourself; the user confirms that install.
+2. Run `npx -y -p apextestlist@1 apex-test-map list --ignore-missing-tests` and
+   show the user the list it produces. It uses the same selection logic as
+   `sf apextests list`, without the Salesforce CLI.
 3. Show `git diff --stat` and suggest committing the annotations on their own,
    separate from functional changes.
 
