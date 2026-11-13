@@ -20,7 +20,7 @@ export async function list(opts: MapOptions, io: Io): Promise<void> {
       ignoreMissingTests: opts.ignoreMissingTests,
       ignoreDirs: opts.ignore,
       filterByMetadata: opts.filterByMetadata,
-      projectDir: opts.project ? resolve(opts.project) : undefined,
+      projectDir: resolve(opts.project),
       warn: (message: string) => warnings.push(message),
     });
   } catch (error) {

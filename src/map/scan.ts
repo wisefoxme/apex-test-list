@@ -119,11 +119,12 @@ function formatTarget(r: ScanTarget, maxTests: number): string[] {
     `  proposed: ${shown.join(', ') || '-'}${more}`,
   ];
   if (r.kind === 'trigger') {
-    lines.push(`  on ${r.sObject ?? '?'}; calls: ${r.handlers?.join(', ') || '-'}`);
+    // Triggers always get handlers; dmlCandidates only when the trigger names its object.
+    lines.push(`  on ${r.sObject ?? '?'}; calls: ${(r.handlers as string[]).join(', ') || '-'}`);
     const dml = r.dmlCandidates;
     if (dml?.count) {
       const extra = dml.count > dml.sample.length ? ` +${dml.count - dml.sample.length} more` : '';
-      lines.push(`  DML on ${r.sObject ?? '?'} (fires trigger, not proposed): ${dml.sample.join(', ')}${extra}`);
+      lines.push(`  DML on ${r.sObject as string} (fires trigger, not proposed): ${dml.sample.join(', ')}${extra}`);
     }
   }
   if (r.missingLocally.length) lines.push(`  not found locally: ${r.missingLocally.join(', ')}`);

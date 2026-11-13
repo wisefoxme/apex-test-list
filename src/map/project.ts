@@ -75,7 +75,7 @@ export async function readApexFile(path: string, root: string): Promise<ApexFile
   const isTrigger = path.endsWith('.trigger');
   const name = basename(path, isTrigger ? '.trigger' : '.cls');
   const code = stripCommentsAndStrings(raw);
-  const tokens = new Set((code.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []).map((t) => t.toLowerCase()));
+  const tokens = new Set(Array.from(code.matchAll(/[A-Za-z_][A-Za-z0-9_]*/g), (m) => m[0].toLowerCase()));
   tokens.delete(name.toLowerCase());
   const sObjectMatch = isTrigger ? /\btrigger\s+\w+\s+on\s+(\w+)/i.exec(code) : null;
   return {
@@ -126,7 +126,7 @@ async function readPackageDirectoryNames(root: string, ignore: string[]): Promis
 export async function loadProject(opts: Pick<MapOptions, 'project' | 'ignore'>): Promise<Project> {
   let found: { metadataPaths: string[]; repoRoot: string };
   try {
-    found = await getPackageDirectories(opts.ignore, opts.project ? resolve(opts.project) : undefined);
+    found = await getPackageDirectories(opts.ignore, resolve(opts.project));
   } catch (error) {
     throw new MapError(`Cannot read the Salesforce DX project: ${(error as Error).message}`, { cause: error });
   }

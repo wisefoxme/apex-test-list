@@ -106,7 +106,8 @@ async function headerProblems(targets: ApexFile[], template: HeaderTemplate): Pr
     if (!t.tests.length && !t.suites.length) continue;
     const content = stripBom(await readFile(t.path, 'utf8'));
     const header = findLeadingHeader(content);
-    const first = /@(tests|testsuites)\s*:/i.exec(content)?.index ?? -1;
+    // Only annotated files get here, so the annotation is always found.
+    const first = (/@(tests|testsuites)\s*:/i.exec(content) as RegExpExecArray).index;
     if (!header) problems.push({ file: t.file, issue: 'no leading header comment' });
     else if (header.type !== template.type) {
       problems.push({

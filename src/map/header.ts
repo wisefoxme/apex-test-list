@@ -9,7 +9,9 @@ export type AnnotationLabel = '@Tests' | '@TestSuites';
 
 export type Insert = { label: AnnotationLabel; names: string[] };
 
-export type Header = { type: 'block' | 'line'; start: number; end: number; close?: number };
+export type Header =
+  | { type: 'block'; start: number; end: number; close: number }
+  | { type: 'line'; start: number; end: number };
 
 const ANNOTATION_LINE_PREFIX = /^[ \t]*(\/\/|\*)[ \t]*$/;
 
@@ -44,7 +46,7 @@ export function mergeExisting(
   const first = new RegExp(regex.source, 'i').exec(content);
   if (!first) return { content, added, pending: added };
   const captured = first[1];
-  const trailing = /[\s*]*$/.exec(captured)?.[0] ?? '';
+  const trailing = captured.slice(captured.replace(/[\s*]+$/, '').length);
   const start = first.index + first[0].length - captured.length;
   const merged = joinNames([...existing, ...added]);
   // Later lines of the same annotation are still read by apextestlist; their names are now on the first line too.
@@ -57,7 +59,7 @@ export function mergeExisting(
 
 /** Finds a leading `/* ... *\/` or `//` comment block before any code. */
 export function findLeadingHeader(content: string): Header | null {
-  const lead = /^\s*/.exec(content)?.[0].length ?? 0;
+  const lead = content.length - content.trimStart().length;
   const lineStart = content.lastIndexOf('\n', lead - 1) + 1;
   if (content.startsWith('/*', lead)) {
     const close = content.indexOf('*/', lead + 2);
@@ -65,8 +67,9 @@ export function findLeadingHeader(content: string): Header | null {
     return { type: 'block', start: lead, end: close + 2, close };
   }
   if (content.startsWith('//', lead)) {
-    const match = /^(?:[ \t]*\/\/[^\n]*(?:\n|$))+/.exec(content.slice(lineStart));
-    return { type: 'line', start: lead, end: lineStart + (match?.[0].length ?? 0) };
+    // The text from lineStart starts with optional indentation and `//`, so this always matches.
+    const match = /^(?:[ \t]*\/\/[^\n]*(?:\n|$))+/.exec(content.slice(lineStart)) as RegExpExecArray;
+    return { type: 'line', start: lead, end: lineStart + match[0].length };
   }
   return null;
 }
@@ -78,7 +81,7 @@ function insertIntoHeader(content: string, header: Header, inserts: Insert[], eo
     const insertion = (atEnd ? eol : '') + annotationLines('// ', inserts, eol);
     return content.slice(0, header.end) + insertion + content.slice(header.end);
   }
-  const close = header.close ?? header.end - 2;
+  const close = header.close;
   const closeLineStart = content.lastIndexOf('\n', close - 1) + 1;
   // A one-line block, or text before `*/` on its closing line, has no clean place for a new line.
   if (closeLineStart <= header.start || content.slice(closeLineStart, close).trim()) return null;

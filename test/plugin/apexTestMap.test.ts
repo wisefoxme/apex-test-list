@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { main } from '../../src/map/cli.js';
 
 type RunResult = { status: number | null; stdout: string; stderr: string };
@@ -545,5 +545,277 @@ describe('package exports', () => {
     expect(api.apexTestMap).toBe(main);
     const result = await api.listTests({ format: 'csv', projectDir: project });
     expect(result.command).toBe('AccountServiceTest,AccountTriggerHandlerTest,OtherDmlTest');
+  });
+});
+
+describe('apex-test-map scan details', () => {
+  it('formats suites, ties, shared handlers, broad DML, org-only tests, and same-named files in text', async () => {
+    write(join(classes, 'Orphan.cls'), '// @TestSuites: Sales\npublic class Orphan {}\n');
+    write(join(classes, 'RefOneTest.cls'), '@isTest class RefOneTest { void t() { new Orphan(); } }\n');
+    write(join(classes, 'RefTwoTest.cls'), '@isTest class RefTwoTest { void t() { new Orphan(); } }\n');
+    write(join(classes, 'HandlerA.cls'), 'public class HandlerA {}\n');
+    write(join(classes, 'HandlerB.cls'), 'public class HandlerB {}\n');
+    write(
+      join(classes, 'TwinHandlerTest.cls'),
+      '@isTest class TwinHandlerTest { void t() { new HandlerA(); new HandlerB(); } }\n',
+    );
+    write(
+      join(triggers, 'Twin.trigger'),
+      'trigger Twin on Contact (after insert) { new HandlerA(); new HandlerB(); }\n',
+    );
+    write(join(triggers, 'Odd.trigger'), 'trigger Odd {}\n');
+    write(join(triggers, 'AccountService.trigger'), 'trigger AccountService on Opportunity (after insert) {}\n');
+    write(join(triggers, 'LeadTrigger.trigger'), 'trigger LeadTrigger on Lead (before insert) {}\n');
+    for (let n = 0; n < 26; n++) {
+      write(
+        join(classes, `LeadDml${n}Test.cls`),
+        `@isTest class LeadDml${n}Test { void t() { insert new Lead(); } }\n`,
+      );
+    }
+    const coverage = join(project, 'coverage.json');
+    write(
+      coverage,
+      JSON.stringify([{ ApexTestClass: { Name: 'OrgOnlyTest' }, ApexClassOrTrigger: { Name: 'Orphan' } }]),
+    );
+
+    const json = await runJson<ScanOutput>('scan');
+    expect(target(json, 'Orphan').proposed.map((p) => p.test)).toEqual(['RefOneTest', 'RefTwoTest']);
+    expect(target(json, 'Twin', 'trigger').proposed).toEqual([{ test: 'TwinHandlerTest', sources: ['handler'] }]);
+    expect(json.targets.filter((t) => t.name === 'AccountService').map((t) => t.kind)).toEqual(['class', 'trigger']);
+
+    const text = (await run('scan', '--coverage', coverage, '--max-tests', '1')).stdout;
+    expect(text).toContain('Coverage data: yes');
+    expect(text).toContain('existing: @TestSuites: Sales');
+    expect(text).toContain('proposed: OrgOnlyTest[coverage] +2 more (BROAD)');
+    expect(text).toContain('not found locally: OrgOnlyTest');
+    expect(text).toContain(
+      'trigger Odd  (force-app/main/default/triggers/Odd.trigger)\n  existing: -\n  proposed: -\n  on ?; calls: -',
+    );
+    expect(text).toMatch(/DML on Lead \(fires trigger, not proposed\): LeadDml0Test, .* \+1 more/);
+  });
+
+  it('says when every package directory is ignored', async () => {
+    const text = await run('scan', '--ignore-package-directory', 'force-app', '--ignore-package-directory', 'vendor');
+    expect(text.stdout).toContain('Package directories: (none)');
+  });
+
+  it('reads coverage as a bare array or a records object, skipping incomplete rows', async () => {
+    const coverage = join(project, 'coverage.json');
+    write(
+      coverage,
+      JSON.stringify({
+        records: [
+          { ApexTestClass: { Name: 'AccountServiceTest' }, ApexClassOrTrigger: { Name: 'AccountUtil' } },
+          { ApexTestClass: { Name: 'OtherDmlTest' }, ApexClassOrTrigger: { Name: 'AccountUtil' } },
+          { ApexTestClass: { Name: 'OtherDmlTest' } },
+        ],
+      }),
+    );
+    const output = await runJson<ScanOutput>('scan', '--coverage', coverage, '--only', 'AccountUtil');
+    expect(target(output, 'AccountUtil').proposed.map((p) => p.test)).toEqual(['AccountServiceTest', 'OtherDmlTest']);
+
+    write(coverage, JSON.stringify({ result: {} }));
+    expect((await run('scan', '--coverage', coverage)).stderr).toContain('has no records array');
+  });
+});
+
+describe('apex-test-map apply details', () => {
+  it('keeps a byte order mark and handles escaped quotes in strings', async () => {
+    write(join(classes, 'Bommed.cls'), "﻿public class Bommed { String s = 'it\\'s AccountServiceTest'; }\n");
+    const plan = join(project, 'plan.json');
+    write(plan, JSON.stringify({ Bommed: ['AccountServiceTest'] }));
+    const output = await runJson<{ files: Array<{ changed: boolean }> }>('apply', '--plan', plan);
+    expect(output.files[0].changed).toBe(true);
+    expect(readFileSync(join(classes, 'Bommed.cls'), 'utf8')).toBe(
+      "﻿// @Tests: AccountServiceTest\npublic class Bommed { String s = 'it\\'s AccountServiceTest'; }\n",
+    );
+  });
+
+  it('adds suites only, next to an annotation at the end of a file, or after code', async () => {
+    write(
+      join(project, 'force-app', 'main', 'default', 'testSuites', 'Sales.testSuite-meta.xml'),
+      '<ApexTestSuite><testClassName>OtherDmlTest</testClassName></ApexTestSuite>',
+    );
+    write(join(classes, 'EndOfFile.cls'), 'public class EndOfFile {}\n// @Tests: AccountServiceTest');
+    write(join(classes, 'Inline.cls'), 'public class Inline {} // @Tests: AccountServiceTest\n');
+    const plan = join(project, 'plan.json');
+    write(
+      plan,
+      JSON.stringify({
+        Orphan: { suites: ['Sales'] },
+        EndOfFile: { suites: ['Sales'] },
+        Inline: { suites: ['Sales'] },
+      }),
+    );
+    const result = await run('apply', '--plan', plan);
+    expect(result.stdout).toContain('updated  force-app/main/default/classes/Orphan.cls  @TestSuites += Sales');
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe('// @TestSuites: Sales\npublic class Orphan {}\n');
+    expect(readFileSync(join(classes, 'EndOfFile.cls'), 'utf8')).toBe(
+      'public class EndOfFile {}\n// @Tests: AccountServiceTest\n// @TestSuites: Sales\n',
+    );
+    expect(readFileSync(join(classes, 'Inline.cls'), 'utf8')).toBe(
+      '// @TestSuites: Sales\npublic class Inline {} // @Tests: AccountServiceTest\n',
+    );
+  });
+
+  it('rejects plans that are not objects, unreadable, or have bad entries', async () => {
+    const plan = join(project, 'plan.json');
+    write(plan, '[]');
+    expect((await run('apply', '--plan', plan)).stderr).toContain('Plan must be a JSON object');
+    write(plan, '{ not json');
+    expect((await run('apply', '--plan', plan)).stderr).toContain('Cannot read plan');
+    write(plan, JSON.stringify({ Orphan: { suites: ['NoSuchSuite'] } }));
+    expect((await run('apply', '--plan', plan)).stderr).toContain('not found locally: suite NoSuchSuite');
+    write(plan, JSON.stringify({ Orphan: 42 }));
+    expect((await run('apply', '--plan', plan)).stderr).toContain('must be an array of test names');
+  });
+});
+
+describe('apex-test-map header template details', () => {
+  const TEMPLATE = '/**\n * {{name}} ({{kind}})\n * @Tests: {{tests}}\n * @TestSuites: {{suites}}\n */\n';
+
+  function useTemplate(): string {
+    const file = join(project, 'header.txt');
+    write(file, TEMPLATE);
+    write(
+      join(project, 'force-app', 'main', 'default', 'testSuites', 'Sales.testSuite-meta.xml'),
+      '<ApexTestSuite><testClassName>OtherDmlTest</testClassName></ApexTestSuite>',
+    );
+    return file;
+  }
+
+  it('renders suites only, and handles headers without room or without * prefixes', async () => {
+    const templateFile = useTemplate();
+    write(join(classes, 'Comment.cls'), '// Just a comment');
+    write(join(classes, 'Closing.cls'), '/**\n * Text before the close */\npublic class Closing {}\n');
+    write(join(classes, 'License.cls'), '/*\nLicense text\n*/\npublic class License {}\n');
+    write(join(classes, 'Unclosed.cls'), '/* never closed\npublic class Unclosed {}\n');
+    const plan = join(project, 'plan.json');
+    write(
+      plan,
+      JSON.stringify({
+        Orphan: { suites: ['Sales'] },
+        Comment: ['OtherDmlTest'],
+        Closing: ['OtherDmlTest'],
+        License: ['OtherDmlTest'],
+        Unclosed: ['OtherDmlTest'],
+      }),
+    );
+    expect((await run('apply', '--plan', plan, '--header-template', templateFile)).status).toBe(0);
+    expect(readFileSync(join(classes, 'Orphan.cls'), 'utf8')).toBe(
+      '/**\n * Orphan (class)\n * @TestSuites: Sales\n */\npublic class Orphan {}\n',
+    );
+    expect(readFileSync(join(classes, 'Comment.cls'), 'utf8')).toBe('// Just a comment\n// @Tests: OtherDmlTest\n');
+    expect(readFileSync(join(classes, 'Closing.cls'), 'utf8')).toBe(
+      '// @Tests: OtherDmlTest\n/**\n * Text before the close */\npublic class Closing {}\n',
+    );
+    expect(readFileSync(join(classes, 'License.cls'), 'utf8')).toBe(
+      '/*\nLicense text\n* @Tests: OtherDmlTest\n*/\npublic class License {}\n',
+    );
+    expect(readFileSync(join(classes, 'Unclosed.cls'), 'utf8')).toMatch(
+      /^\/\*\*\n \* Unclosed \(class\)\n \* @Tests: OtherDmlTest\n \*\/\n\/\* never closed/,
+    );
+  });
+
+  it('rejects empty, non-comment, unclosed, repeated, and missing templates', async () => {
+    const templateFile = join(project, 'header.txt');
+    const plan = join(project, 'plan.json');
+    write(plan, JSON.stringify({ Orphan: ['OtherDmlTest'] }));
+    const problems = async (template: string): Promise<string> => {
+      write(templateFile, template);
+      return (await run('apply', '--plan', plan, '--header-template', templateFile)).stderr;
+    };
+    expect(await problems('')).toContain('it is empty');
+    expect(await problems('not a comment\n')).toContain('it must start with a /* or // comment');
+    expect(await problems('/**\n * @Tests: {{tests}}\n')).toContain('the /* comment is never closed with */');
+    expect(await problems('// @Tests: {{tests}}\n// @Tests: {{tests}}\n')).toContain(
+      '{{tests}} appears more than once',
+    );
+    expect((await run('apply', '--plan', plan, '--header-template', join(project, 'none.txt'))).stderr).toContain(
+      'Cannot read header template',
+    );
+  });
+});
+
+describe('apex-test-map audit text', () => {
+  it('prints every section, with coverage, a template, and test dependencies', async () => {
+    const templateFile = join(project, 'header.txt');
+    write(templateFile, '// @Tests: {{tests}}\n');
+    write(join(project, '.test-dependencies.yml'), 'AccountServiceTest:\n  - CustomField:Account.Industry\n');
+    write(join(classes, 'OnlyMissing.cls'), '// @Tests: AccountServiceTest\npublic class OnlyMissing {}\n');
+    write(join(classes, 'OnlyStale.cls'), '// @Tests: AccountServiceTest, OtherDmlTest\npublic class OnlyStale {}\n');
+    write(join(classes, 'SuiteGone.cls'), '// @TestSuites: NoSuchSuite\npublic class SuiteGone {}\n');
+    write(join(classes, 'Late.cls'), 'public class Late {}\n// @Tests: Ghost, Orphan, OtherDmlTest\n');
+    write(
+      join(project, 'force-app', 'main', 'default', 'testSuites', 'Stale.testSuite-meta.xml'),
+      '<ApexTestSuite><testClassName>GoneTest</testClassName></ApexTestSuite>',
+    );
+    const coverage = join(project, 'coverage.json');
+    write(
+      coverage,
+      JSON.stringify([
+        { ApexTestClass: { Name: 'AccountServiceTest' }, ApexClassOrTrigger: { Name: 'OnlyMissing' } },
+        { ApexTestClass: { Name: 'OtherDmlTest' }, ApexClassOrTrigger: { Name: 'OnlyMissing' } },
+        { ApexTestClass: { Name: 'AccountServiceTest' }, ApexClassOrTrigger: { Name: 'OnlyStale' } },
+        { ApexTestClass: { Name: 'OtherDmlTest' }, ApexClassOrTrigger: { Name: 'SuiteGone' } },
+      ]),
+    );
+    write(join(project, '.test-dependencies.yml'), 'AccountServiceTest:\n  - not valid\n');
+    const text = (await run('audit', '--coverage', coverage, '--header-template', templateFile, '--max-tests', '2'))
+      .stdout;
+    expect(text).toContain('Late.cls: Ghost');
+    expect(text).toContain('Late.cls: Orphan');
+    expect(text).toContain('SuiteGone.cls: NoSuchSuite');
+    expect(text).toContain('Stale.testSuite-meta.xml: GoneTest');
+    expect(text).toContain('Late.cls: 3 tests');
+    expect(text).toContain('Late.cls: no leading header comment');
+    expect(text).toContain('"AccountServiceTest": "not valid" is not Type:Member');
+    expect(text).toContain('coverage data: yes');
+    expect(text).toContain('OnlyMissing.cls: covering tests not annotated: OtherDmlTest\n');
+    expect(text).toContain('OnlyStale.cls: annotated but no coverage: OtherDmlTest\n');
+    expect(text).toContain('SuiteGone.cls: covering tests not annotated: OtherDmlTest');
+    expect(text).toContain('Annotations not in a leading header like the template:');
+
+    const plain = (await run('audit')).stdout;
+    expect(plain).toContain('coverage data: no');
+    expect(plain).not.toContain('Differences from org coverage');
+    expect(plain).not.toContain('leading header like the template');
+  });
+
+  it('reports a .test-dependencies.yml that is not a map', async () => {
+    write(join(project, '.test-dependencies.yml'), 'just text\n');
+    const output = await runJson<{ testDependencies: { tests: number; problems: string[] } }>('audit');
+    expect(output.testDependencies).toEqual({
+      tests: 0,
+      problems: ['the file is not a map of test classes to metadata lists'],
+    });
+  });
+});
+
+describe('apex-test-map main', () => {
+  it('defaults to the current directory and process output', async () => {
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(project);
+    const out = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const err = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      expect(await main(['list', '--json'])).toBe(0);
+      expect(String(out.mock.calls[0][0])).toContain('"AccountServiceTest"');
+      expect(await main(['scan', '--project'])).toBe(2);
+      expect(String(err.mock.calls[0][0])).toContain('Missing value for --project');
+    } finally {
+      cwd.mockRestore();
+      out.mockRestore();
+      err.mockRestore();
+    }
+  });
+
+  it('rethrows errors that are not its own', async () => {
+    const io = {
+      out: (): void => {
+        throw new Error('output closed');
+      },
+      err: (): void => {},
+    };
+    await expect(main(['--help'], io)).rejects.toThrow('output closed');
   });
 });

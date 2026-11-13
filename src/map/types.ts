@@ -8,7 +8,8 @@ export type Io = {
 
 export type MapOptions = {
   command?: string;
-  project?: string;
+  /** Folder inside the Salesforce DX project; defaults to the current working directory. */
+  project: string;
   ignore: string[];
   coverage?: string;
   plan?: string;

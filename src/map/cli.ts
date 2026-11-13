@@ -54,6 +54,7 @@ export function parseArgs(argv: string[]): MapOptions {
   const hasCommand = argv.length > 0 && !argv[0].startsWith('-');
   const opts: MapOptions = {
     command: hasCommand ? argv[0] : undefined,
+    project: process.cwd(),
     ignore: [],
     only: null,
     maxTests: 10,
