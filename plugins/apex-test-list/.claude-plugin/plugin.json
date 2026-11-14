@@ -1,6 +1,6 @@
 {
   "name": "apex-test-list",
-  "version": "1.15.5",
+  "version": "1.16.0",
   "description": "Map Apex classes and triggers to the tests that cover them with reviewable @Tests annotations, and audit those annotations against org coverage, for selective test runs with the apextestlist Salesforce CLI plugin.",
   "author": {
     "name": "Renato Oliveira"
