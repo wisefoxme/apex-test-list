@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.16.0](https://github.com/wisefoxme/apex-test-list/compare/v1.15.5...v1.16.0) (2026-11-14)
+
+
+### Features
+
+* add AI coding agent skills to annotate and audit Apex test mappings ([#446](https://github.com/wisefoxme/apex-test-list/issues/446)) ([b658c2c](https://github.com/wisefoxme/apex-test-list/commit/b658c2c183f187c34daab9e1e183bf1b9a0ab8f5))
+
 ## [1.15.5](https://github.com/wisefoxme/apex-test-list/compare/v1.15.4...v1.15.5) (2026-11-07)
 
 
