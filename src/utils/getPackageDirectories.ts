@@ -8,9 +8,11 @@ import { SfdxProject } from './types.js';
 
 export async function getPackageDirectories(
   ignoreDirs: string[],
+  startDir?: string,
 ): Promise<{ metadataPaths: string[]; repoRoot: string }> {
-  const { repoRoot, dxConfigFilePath } = await getRepoRoot();
+  const { repoRoot, dxConfigFilePath } = await getRepoRoot(startDir);
 
+  // Stryker disable next-line StringLiteral: empty-string encoding returns a Buffer, which JSON.parse reads as the same UTF-8 text
   const sfdxProjectRaw: string = await readFile(dxConfigFilePath, 'utf-8');
   const sfdxProject: SfdxProject = JSON.parse(sfdxProjectRaw) as SfdxProject;
   const packageDirectories = sfdxProject.packageDirectories

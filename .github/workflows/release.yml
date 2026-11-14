@@ -69,11 +69,11 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
+      # Manifest mode (release-please-config.json + .release-please-manifest.json) so the
+      # release PR also bumps the Claude Code plugin.json. Tags stay "vX.Y.Z" (no component).
       - name: Release Please
         id: release
         uses: googleapis/release-please-action@v5
-        with:
-          release-type: node
 
   publish-release:
     name: Publish Release to NPM

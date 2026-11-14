@@ -1,0 +1,14 @@
+{
+  "name": "apex-test-list",
+  "description": "apex-test-list: run only the Apex tests that matter, with test selection you can read and review.",
+  "owner": {
+    "name": "Renato Oliveira"
+  },
+  "plugins": [
+    {
+      "name": "apex-test-list",
+      "source": "./plugins/apex-test-list",
+      "description": "Annotate Apex classes and triggers with the tests that cover them, and audit those annotations."
+    }
+  ]
+}

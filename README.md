@@ -13,6 +13,7 @@ A plugin that generates a list of tests that your automated process should run, 
 <details>
   <summary>Table of Contents</summary>
 
+- [Why Explicit Test Selection?](#why-explicit-test-selection)
 - [Install](#install)
 - [Usage](#usage)
   - [1. `@Tests:` (Custom Comment Annotation)](#1-tests-custom-comment-annotation)
@@ -25,10 +26,27 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
 - [GitHub Action](#github-action)
+- [AI Coding Agent Skills](#ai-coding-agent-skills)
+- [Programmatic Use](#programmatic-use)
 - [Command Reference](#command-reference)
 - [Issues](#issues)
 - [License](#license)
 </details>
+
+## Why Explicit Test Selection?
+
+Salesforce's `RunRelevantTests` test level (beta since Spring '26) also runs only some tests, but the org chooses them on the server by analyzing the deployment. Salesforce doesn't document how that analysis works, and the deploy result is the first place you see which tests it picked. apex-test-list instead makes the selection explicit and keeps it in your repository:
+
+|                              | apex-test-list (`RunSpecifiedTests`)                                                | `RunRelevantTests`                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Who picks the tests          | You, through `@Tests:` / `@TestSuites:` comments or `.test-dependencies.yml`        | The org, from an undocumented analysis of the deployment                         |
+| Know the list before deploying | Yes: `sf apextests list` prints it locally, in CI, or in a pull request           | No: it shows up in the deploy result (for example `sf project deploy start --json`) |
+| Review changes to the selection | Yes, mappings are source lines reviewed and versioned like any other change     | No; you can only influence it with `@IsTest(testFor=...)` and `@IsTest(critical=true)` on test classes |
+| Reproducible                 | Same files and manifest give the same list every time                               | Depends on the org's analysis, which may change between releases                 |
+| Indirect dependencies        | Mapped deliberately (for example, a handler's tests on its trigger)                 | Community testing found it can miss indirect and dynamically created classes     |
+| Availability                 | Any org and API version that supports `RunSpecifiedTests`                           | Beta; requires a Spring '26 org                                                  |
+
+Both still require 75% coverage for each Apex class and trigger in the deployment. The cost of explicit selection is writing and maintaining the mappings. The [AI coding agent skills](#ai-coding-agent-skills) write them from your org's code coverage or your test code, and audit them as the code changes.
 
 ## Install
 
@@ -238,6 +256,53 @@ For GitHub Actions, this is also available as a native Action — no `sf` CLI or
 | `test-count`  | Number of Apex test class names found.                                             |
 | `command`     | The formatted test list, ready to append to a Salesforce CLI deploy/validate command. |
 | `warnings`    | Newline-separated list of warnings emitted while listing tests, if any.            |
+
+## AI Coding Agent Skills
+
+Annotating an existing org by hand is the main cost of adopting this plugin. The skills in [`plugins/apex-test-list`](plugins/apex-test-list) do it for you: your AI coding agent maps each Apex class and trigger to the tests that cover it, using org code coverage when you have an org or static analysis of your test code when you don't, shows you the plan, and writes the `// @Tests:` annotations.
+
+Every mapping stays a reviewable line in your source, and `sf apextests list` shows exactly which tests a deployment will run, unlike server-side test selection.
+
+The skills are standard `SKILL.md` files, so they also work in GitHub Copilot and other AI coding agents:
+
+```sh
+# Claude Code (type these inside a Claude Code session)
+/plugin marketplace add wisefoxme/apex-test-list
+/plugin install apex-test-list@apex-test-list
+
+# GitHub Copilot CLI
+copilot plugin marketplace add wisefoxme/apex-test-list
+copilot plugin install apex-test-list@apex-test-list
+
+# Any agent, with the skills CLI (https://skills.sh)
+npx skills add wisefoxme/apex-test-list
+
+# Any agent, with the GitHub CLI
+gh skill install wisefoxme/apex-test-list --agent github-copilot
+```
+
+| Skill            | What it does                                                                                                           |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `annotate-tests` | Proposes tests per class and trigger (coverage, naming, references, trigger handlers), then writes or merges `@Tests`. |
+| `audit-tests`    | Finds unannotated classes, unknown or non-test names, missing suites, broad annotations, and drift from org coverage.  |
+
+See the [plugin README](plugins/apex-test-list/README.md) for requirements and data handling.
+
+## Programmatic Use
+
+The npm package also works without the Salesforce CLI, from Node.js 22.19 or newer:
+
+```ts
+import { listTests } from 'apextestlist';
+
+const { tests, command } = await listTests({
+  manifest: 'package/package.xml',
+  ignoreMissingTests: true,
+  projectDir: 'path/to/sfdx-project', // defaults to the current directory
+});
+```
+
+`listTests` takes the same options as `sf apextests list` and returns the selected test names plus the formatted `--tests` flags. The package also installs an `apex-test-map` command (`npx -p apextestlist apex-test-map --help`) that the AI coding agent skills use to propose, write, audit, and list test mappings.
 
 ## Command Reference
 
