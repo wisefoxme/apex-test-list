@@ -1,9 +1,16 @@
-npm run build
+npm run readme
 
 if ! git diff --quiet -- dist/action; then
   echo ""
   echo "dist/action is out of date ('npm run build:action' just regenerated it)."
   echo "Review the diff, then: git add dist/action && git commit --amend --no-edit (or a new commit) -- then push again."
+  exit 1
+fi
+
+if ! git diff --quiet -- README.md; then
+  echo ""
+  echo "README.md command reference is out of date ('oclif readme' just regenerated it)."
+  echo "Review the diff, then: git add README.md && git commit --amend --no-edit (or a new commit) -- then push again."
   exit 1
 fi
 

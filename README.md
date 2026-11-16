@@ -306,25 +306,38 @@ const { tests, command } = await listTests({
 
 ## Command Reference
 
+<!-- commands -->
+* [`sf apextests list`](#sf-apextests-list)
+
+## `sf apextests list`
+
+List Apex tests to run, from annotations in your package directories or a package.xml.
+
 ```
 USAGE
-  $ sf apextests list -f <value> -x <value> -s -n -d <value> -m -e [--json]
+  $ sf apextests list [--json] [--flags-dir <value>] [-f <value>] [-x <value>] [-s] [-d <value>...] [-n] [-m] [-e]
 
 FLAGS
-  -f, --format=<value>            Output format. Available options:
-                                    - `sf` (default): CLI-friendly test list
-                                    - `csv`: Comma-separated values
-  -x, --manifest=<value>          Manifest XML file (package.xml) to filter test annotations.
-  -s, --ignore-missing-tests      [default: false] Ignore test methods that are not found in any local package directories.
-  -n, --no-warnings               [default: false] Do not print warnings for each file missing annotations.
-  -d, --ignore-package-directory  Ignore a package directory when looking for test annotations.
-                                  Should match how they are declared in "sfdx-project.json".
-                                  Can be declared multiple times.
-  -m, --filter-by-metadata        [default: false] When enabled with `manifest`, test selection is based on metadata changes (e.g., Flow, CustomObject) rather than Apex annotations.
-  -e, --fail-on-empty             [default: false] Exit with code 1 if no test methods are found. With `--manifest`, exits 0 instead when the manifest has no ApexClass/ApexTrigger members.
+  -d, --ignore-package-directory=<value>...  Ignore a package directory.
+  -e, --fail-on-empty                        Fail with exit code 1 if no test methods are found.
+  -f, --format=<value>                       [default: sf] Format of the output.
+  -m, --filter-by-metadata                   Only include tests that explicitly declare metadata dependencies matching
+                                             changed metadata.
+  -n, --no-warnings                          Do not print warnings for each Apex file missing annotations.
+  -s, --ignore-missing-tests                 Ignore missing test methods.
+  -x, --manifest=<value>                     Manifest XML file.
 
 GLOBAL FLAGS
-  --json  Format output as JSON.
+  --flags-dir=<value>  Import flag values from a directory.
+  --json               Format output as json.
+
+DESCRIPTION
+  List Apex tests to run, from annotations in your package directories or a package.xml.
+
+  Use the Apex Tests List tool to list specific tests on your Salesforce DX repository. If no tests are found, all
+  classes with the `@IsTest` annotation will be included in the list. The tests you want listed must meet some criteria,
+  such as having a specific comment to annotate them to show up on this list. Please refer to the documentation on the
+  project's GitHub page for more information if needed.
 
 EXAMPLES
   List all test annotations found in package directories in Salesforce CLI format:
@@ -347,14 +360,58 @@ EXAMPLES
 
     $ sf apextests list -d "force-app"
 
-  Fail with exit code 1 if a manifest declares Apex but no tests are found for it (exit 0 if the manifest has no Apex at all):
+  Fail with exit code 1 if a manifest declares Apex but no tests are found for it (exit 0 if the manifest has no Apex
+  at all):
 
     $ sf apextests list --format sf --manifest package.xml --fail-on-empty
 
   List test annotations without printing warnings for each file missing annotations:
 
     $ sf apextests list -n
+
+FLAG DESCRIPTIONS
+  -d, --ignore-package-directory=<value>...  Ignore a package directory.
+
+    If provided, do not search the package directory for test annotations. The value must match how the directory is
+    declared in `sfdx-project.json`. You can specify this flag multiple times.
+
+  -e, --fail-on-empty  Fail with exit code 1 if no test methods are found.
+
+    If provided, the command exits with code 1 when no test methods are found. When combined with `--manifest`, the
+    command still exits with code 0 if the manifest contains no `ApexClass` or `ApexTrigger` members, since there is
+    nothing to test in that case.
+
+  -f, --format=<value>  Format of the output.
+
+    Available formats:
+
+    - `sf` (default): One `--tests` flag per test (`--tests A --tests B`), ready to append to the Salesforce CLI deploy
+    and validate commands.
+    - `sfdx`: A single `--tests` flag followed by space-separated test names (`--tests A B`).
+    - `csv`: Comma-separated test names (`A,B`).
+
+  -m, --filter-by-metadata  Only include tests that explicitly declare metadata dependencies matching changed metadata.
+
+    When enabled with `manifest`, test selection is based on metadata changes (e.g., Flow, CustomObject) rather than
+    Apex annotations.
+
+  -n, --no-warnings  Do not print warnings for each Apex file missing annotations.
+
+    Suppresses the warning printed for each Apex file without a `@tests`, `@testsuites`, or `@istest` annotation, and
+    for each annotated test class that is not found in any package directory.
+
+  -s, --ignore-missing-tests  Ignore missing test methods.
+
+    If provided, ignore test methods that are not found in any of the local package directories.
+
+  -x, --manifest=<value>  Manifest XML file.
+
+    When you specify a manifest file, the plugin will not search directories for all classes with annotations, but
+    instead will read the manifest file and search for those classes within your package directories.
 ```
+
+_See code: [src/commands/apextests/list.ts](https://github.com/wisefoxme/apex-test-list/blob/master/src/commands/apextests/list.ts)_
+<!-- commandsstop -->
 
 ## Issues
 
