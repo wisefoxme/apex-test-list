@@ -56,6 +56,7 @@
   "license": "BSD-3-Clause",
   "oclif": {
     "commands": "./lib/commands",
+    "repositoryPrefix": "<%- repo %>/blob/master/<%- commandPath %>",
     "bin": "sf",
     "topicSeparator": " ",
     "devPlugins": [
@@ -83,6 +84,7 @@
     "postpack": "shx rm -f oclif.manifest.json oclif.lock",
     "prepack": "wireit",
     "prepare": "husky",
+    "readme": "wireit",
     "test": "wireit",
     "test:mutation": "wireit",
     "test:mutation:incremental": "wireit",
@@ -203,6 +205,21 @@
     },
     "prepack": {
       "command": "oclif manifest && oclif readme",
+      "files": [
+        "src/commands/apextests/list.ts",
+        "messages/apextests.list.md",
+        "README.md"
+      ],
+      "dependencies": [
+        "build"
+      ],
+      "output": [
+        "README.md"
+      ],
+      "clean": false
+    },
+    "readme": {
+      "command": "oclif readme",
       "files": [
         "src/commands/apextests/list.ts",
         "messages/apextests.list.md",

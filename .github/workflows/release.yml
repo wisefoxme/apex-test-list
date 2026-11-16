@@ -102,6 +102,19 @@ jobs:
       - name: Publish to NPM
         run: NODE_AUTH_TOKEN="" npm publish --provenance --access public --tag latest
 
+      # `npm publish` runs the `prepack` script (oclif manifest && oclif readme),
+      # which regenerates README.md's Command Reference against the version
+      # release-please just bumped. Push that back to main so the repo's README
+      # never drifts from what was just published. This must run BEFORE the tag
+      # move below: it leaves README.md modified but uncommitted in the working
+      # tree, and the repo's husky pre-push hook checks README.md is committed
+      # on every push (including a tag push) - pushing the tag first fails it.
+      - name: Commit regenerated README
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "docs: regenerate command reference [skip ci]"
+          file_pattern: README.md
+
       # Moves a floating major-version tag (e.g. v1) to the release commit so
       # GitHub Action consumers can pin `uses: wisefoxme/apex-test-list@v1`
       # instead of an exact patch version.
