@@ -311,7 +311,7 @@ const { tests, command } = await listTests({
 
 ## `sf apextests list`
 
-Use the Apex Tests List tool to list specific tests on your Salesforce DX repository. If no tests are found, all classes with the `@IsTest` annotation will be included in the list. The tests you want listed must meet some criteria, such as having a specific comment to annotate them to show up on this list. Please refer to the documentation on the project's GitHub page for more information if needed.
+List Apex tests to run, from annotations in your package directories or a package.xml.
 
 ```
 USAGE
@@ -332,30 +332,48 @@ GLOBAL FLAGS
   --json               Format output as json.
 
 DESCRIPTION
+  List Apex tests to run, from annotations in your package directories or a package.xml.
+
   Use the Apex Tests List tool to list specific tests on your Salesforce DX repository. If no tests are found, all
   classes with the `@IsTest` annotation will be included in the list. The tests you want listed must meet some criteria,
   such as having a specific comment to annotate them to show up on this list. Please refer to the documentation on the
   project's GitHub page for more information if needed.
 
-  Lists tests in a package.xml file or from your package directories.
-
 EXAMPLES
-  $ sf apextests list --format csv
+  List all test annotations found in package directories in Salesforce CLI format:
 
-  $ sf apextests list --format sf
+    $ sf apextests list --format sf
 
-  $ sf apextests list --format sf --manifest package.xml
+  List all test annotations in CSV format:
 
-  $ sf apextests list --format sf --manifest package.xml --ignore-missing-tests
+    $ sf apextests list --format csv
 
-  $ sf apextests list --format sf --manifest package.xml -d "force-app"
+  List test annotations only for Apex classes/triggers in a manifest file:
 
-  $ sf apextests list --format sf --manifest package.xml --fail-on-empty
+    $ sf apextests list --format sf --manifest package.xml
+
+  List test annotations only if they exist in the package directories:
+
+    $ sf apextests list --format sf --ignore-missing-tests
+
+  Exclude annotations found in the "force-app" directory:
+
+    $ sf apextests list -d "force-app"
+
+  Fail with exit code 1 if a manifest declares Apex but no tests are found for it (exit 0 if the manifest has no Apex
+  at all):
+
+    $ sf apextests list --format sf --manifest package.xml --fail-on-empty
+
+  List test annotations without printing warnings for each file missing annotations:
+
+    $ sf apextests list -n
 
 FLAG DESCRIPTIONS
   -d, --ignore-package-directory=<value>...  Ignore a package directory.
 
-    If provided, do not search the package directory for test annotations.
+    If provided, do not search the package directory for test annotations. The value must match how the directory is
+    declared in `sfdx-project.json`. You can specify this flag multiple times.
 
   -e, --fail-on-empty  Fail with exit code 1 if no test methods are found.
 
@@ -365,8 +383,12 @@ FLAG DESCRIPTIONS
 
   -f, --format=<value>  Format of the output.
 
-    By default, the format being returned is a list in the format that can be merged with the test flags of the
-    Salesforce CLI deploy and validate commands. Available formats are `sf` (default) and `csv`.
+    Available formats:
+
+    - `sf` (default): One `--tests` flag per test (`--tests A --tests B`), ready to append to the Salesforce CLI deploy
+    and validate commands.
+    - `sfdx`: A single `--tests` flag followed by space-separated test names (`--tests A B`).
+    - `csv`: Comma-separated test names (`A,B`).
 
   -m, --filter-by-metadata  Only include tests that explicitly declare metadata dependencies matching changed metadata.
 
@@ -375,11 +397,12 @@ FLAG DESCRIPTIONS
 
   -n, --no-warnings  Do not print warnings for each Apex file missing annotations.
 
-    Do not print warnings for each Apex file missing annotations.
+    Suppresses the warning printed for each Apex file without a `@tests`, `@testsuites`, or `@istest` annotation, and
+    for each annotated test class that is not found in any package directory.
 
   -s, --ignore-missing-tests  Ignore missing test methods.
 
-    If provided, ignore test methods that are not found in any of the package directories.
+    If provided, ignore test methods that are not found in any of the local package directories.
 
   -x, --manifest=<value>  Manifest XML file.
 
