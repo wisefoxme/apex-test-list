@@ -5,6 +5,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.16.2](https://github.com/wisefoxme/apex-test-list/compare/v1.16.1...v1.16.2) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** bump @salesforce/core ([#452](https://github.com/wisefoxme/apex-test-list/issues/452)) ([2325797](https://github.com/wisefoxme/apex-test-list/commit/23257974c7cbea55986ce86030b1dad86ce16ab3))
+
 ## [1.16.1](https://github.com/wisefoxme/apex-test-list/compare/v1.16.0...v1.16.1) (2026-11-16)
 
 
