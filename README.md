@@ -25,6 +25,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Handling Missing Tests](#handling-missing-tests)
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
+- [sfdx-hardis Integration](#sfdx-hardis-integration)
 - [GitHub Action](#github-action)
 - [AI Coding Agent Skills](#ai-coding-agent-skills)
 - [Programmatic Use](#programmatic-use)
