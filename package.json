@@ -5,7 +5,8 @@
   "dependencies": {
     "@oclif/core": "5.1.12",
     "@salesforce/core": "9.5.0",
-    "@salesforce/sf-plugins-core": "13.0.9"
+    "@salesforce/sf-plugins-core": "13.0.9",
+    "sfdx-hardis": "8.27.0"
   },
   "devDependencies": {
     "@actions/core": "3.0.1",
@@ -56,6 +57,9 @@
   "license": "BSD-3-Clause",
   "oclif": {
     "commands": "./lib/commands",
+    "hooks": {
+      "sfdx-hardis:test-selection": "./lib/hooks/sfdxHardisTestSelection"
+    },
     "repositoryPrefix": "<%- repo %>/blob/master/<%- commandPath %>",
     "bin": "sf",
     "topicSeparator": " ",

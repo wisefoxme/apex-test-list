@@ -25,6 +25,7 @@ A plugin that generates a list of tests that your automated process should run, 
   - [Handling Missing Tests](#handling-missing-tests)
   - [Handling Missing Annotations](#handling-missing-annotations)
   - [Failing When No Tests Are Found](#failing-when-no-tests-are-found)
+- [sfdx-hardis Integration](#sfdx-hardis-integration)
 - [GitHub Action](#github-action)
 - [AI Coding Agent Skills](#ai-coding-agent-skills)
 - [Programmatic Use](#programmatic-use)
@@ -219,6 +220,16 @@ sf apextests list --manifest package.xml --fail-on-empty
 This is useful as a CI guardrail: skip the deploy/validate step cleanly when a manifest has no Apex changes, but fail loudly when Apex changed and no tests cover it.
 
 The GitHub Action's `fail-on-empty` input behaves the same way — see [Inputs](#inputs).
+
+## sfdx-hardis Integration
+
+When this plugin is installed next to [sfdx-hardis](https://github.com/hardisgroupcom/sfdx-hardis), `sf hardis:project:deploy:smart` uses it to choose the Apex tests of a validation or deployment. The plugin listens to the [`sfdx-hardis:test-selection` event](https://github.com/hardisgroupcom/sfdx-hardis/blob/main/docs/sfdx-hardis-plugins.md#choose-the-apex-tests): once the package.xml to deploy is final, it lists the tests annotated for its Apex classes and triggers (same as `sf apextests list --manifest <package.xml> --ignore-missing-tests`) and asks sfdx-hardis to run them with `RunSpecifiedTests`.
+
+- Test classes sfdx-hardis already selected (for example `deploymentApexTestClasses`) are kept.
+- When no test is found, nothing is written and sfdx-hardis keeps its own selection.
+- `NoTestRun` and `RunAllTestsInOrg` are never overridden.
+- Names sfdx-hardis refuses (namespaced or `Class.method`) are skipped with a warning.
+- Set `APEX_TEST_LIST_DISABLE_HARDIS_HOOK=true` to turn it off.
 
 ## GitHub Action
 
